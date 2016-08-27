@@ -69,7 +69,9 @@ function main() {
 
   console.log('https://' + ipAddress + ':' + port + '/download');
   var destinationPath = program.args.shift() || '.';
-  var ipasDir = destinationPath;
+  var serverDir = destinationPath;
+  var ipasDir = serverDir + "/ipa";
+  var apksDir = serverDir + "/apk";
 
   var key;
   var cert;
@@ -92,9 +94,14 @@ function main() {
   app.use('/public', express.static(path.join(__dirname, '..', 'public')));
   app.use('/cer', express.static(globalCerFolder));
 
-  app.get('/ipa/:ipa', function(req, res) {
-    var filename = ipasDir + '/' + req.params.ipa;
-    // console.log(filename);
+  app.get(['/ipa/:app', '/apk/:app'], function(req, res) {
+    var filename;
+    if (path.extname(req.params.app) === '.apk') {
+      filename = apksDir + '/' + req.params.app;
+    } else {
+      filename = ipasDir + '/' + req.params.app;
+    }
+    console.log(filename);
 
     // This line opens the file as a readable stream
     var readStream = fs.createReadStream(filename);
@@ -111,26 +118,18 @@ function main() {
     });
   });
 
-  app.get(['/', '/download'], function(req, res, next) {
+  app.get(['/', '/download/:app'], function(req, res, next) {
 
     fs.readFile(path.join(__dirname, '..', 'templates') + '/download.html', function(err, data) {
       if (err) throw err;
       var template = data.toString();
-
-      var ipas = ipasInLocation(ipasDir);
-
-      var items = [];
-      for (var i = ipas.length - 1; i >= 0; i--) {
-        items.push(itemInfoWithName(ipas[i], ipasDir));
-      };
-
-      items = items.sort(function(a, b) {
-        var result = b.time.getTime() - a.time.getTime();
-        // if (result > 0) {result = 1} else if (result < 0) { result = -1 };
-
-        return result;
-      });
-
+      var items;
+      if (req.params.app === 'apk') {
+        items = appItems(apksInLocation(apksDir));
+      }
+      else  {
+        items = appItems(ipasInLocation(ipasDir));
+      }
       var info = {};
       info.ip = ipAddress;
       info.port = port;
@@ -139,7 +138,6 @@ function main() {
       res.send(rendered);
     })
   });
-
 
   app.get('/plist/:file', function(req, res) {
     fs.readFile(path.join(__dirname, '..', 'templates') + '/template.plist', function(err, data) {
@@ -162,13 +160,40 @@ function main() {
 
 }
 
-function itemInfoWithName(name, ipasDir) {
-  var location = ipasDir + '/' + name + '.ipa';
-  var stat = fs.statSync(location);
+function appItems(apps) {
+  var items = [];
+  for (var i = apps.length - 1; i >= 0; i--) {
+    items.push(appInfoWithName(apps[i]));
+  };
+  items = items.sort(function(a, b) {
+    var result = b.time.getTime() - a.time.getTime();
+    // if (result > 0) {result = 1} else if (result < 0) { result = -1 };
+    return result;
+  });
+  return items;
+}
+
+function appInfoWithName(filename) {
+  var stat = fs.statSync(filename);
   var time = new Date(stat.mtime);
   var timeString = strftime('%F %H:%M', time);
+  var iconString;
+  if (path.extname(filename) === '.ipa') {
+    iconString = getIconFromIpa(filename);
+  } else {
+    iconString = getIconFromApk(filename);
+  }
+  return {
+    name: path.basename(filename, path.extname(filename)),
+    description: '更新: ' + timeString,
+    time: time,
+    iconString: iconString,
+    ip: ipAddress,
+    port: port,
+  }
+}
 
-  // get ipa icon only works on macos
+function getIconFromIpa(filename) {
   var iconString = '';
   var exeName = '';
   if (process.platform == 'darwin') {
@@ -176,10 +201,10 @@ function itemInfoWithName(name, ipasDir) {
   } else {
     exeName = 'pngdefry-linux';
   }
-  var ipa = new AdmZip(location);
+  var ipa = new AdmZip(filename);
   var ipaEntries = ipa.getEntries();
-  var tmpIn = ipasDir + '/icon.png';
-  var tmpOut = ipasDir + '/icon_tmp.png';
+  var tmpIn = __dirname + '/icon.png';
+  var tmpOut = __dirname + '/icon_tmp.png';
   ipaEntries.forEach(function(ipaEntry) {
     if (ipaEntry.entryName.indexOf('AppIcon60x60@3x.png') != -1) {
       var buffer = new Buffer(ipaEntry.getData());
@@ -192,14 +217,25 @@ function itemInfoWithName(name, ipasDir) {
   });
   fs.removeSync(tmpIn);
   fs.removeSync(tmpOut);
-  return {
-    name: name,
-    description: '   更新: ' + timeString,
-    time: time,
-    iconString: iconString,
-    ip: ipAddress,
-    port: port,
-  }
+  return iconString;
+}
+
+function getIconFromApk(filename) {
+  var iconString = '';
+  var apk = new AdmZip(filename);
+  var apkEntries = apk.getEntries();
+  var tmpIn = __dirname + '/icon.png';
+  apkEntries.forEach(function(apkEntry) {
+    if (apkEntry.entryName.indexOf('AppIcon60x60@3x.png') != -1) {
+      var buffer = new Buffer(apkEntry.getData());
+      if (buffer.length) {
+        fs.writeFileSync(tmpIn, buffer);
+        iconString = 'data:image/png;base64,' + base64_encode(tmpIn);
+      }
+    }
+  });
+  fs.removeSync(tmpIn);
+  return iconString;
 }
 
 function base64_encode(file) {
@@ -213,11 +249,19 @@ function base64_encode(file) {
  */
 
 function ipasInLocation(location) {
+  return filesInLocation(location,'.ipa');
+}
+
+function apksInLocation(location) {
+  return filesInLocation(location,'.apk');
+}
+
+function filesInLocation(location,type) {
   var result = [];
   var files = fs.readdirSync(location);
   for (var i in files) {
-    if (path.extname(files[i]) === ".ipa") {
-      result.push(path.basename(files[i], '.ipa'));
+    if (path.extname(files[i]) === type) {
+      result.push(path.join(location, files[i]));
     }
   }
   return result;
