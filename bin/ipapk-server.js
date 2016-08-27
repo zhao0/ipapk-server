@@ -28,7 +28,7 @@ var ipAddress = underscore
   .address;
 
 
-var globalCerFolder = os.homedir() + '/.ios-ipa-server/' + ipAddress;
+var globalCerFolder = os.homedir() + '/.ipapk-server/' + ipAddress;
 /**
  * Main program.
  */

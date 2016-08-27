@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 ip=$1
-cerDir="$HOME/.ios-ipa-server/"$ip"/"
+cerDir="$HOME/.ipapk-server/"$ip"/"
 # echo $ip
 # echo $cerDir
 mkdir -p "$cerDir"
@@ -11,7 +11,7 @@ blackhole="/dev/null"
 
 openssl genrsa -out "$cerDir"myCA.key 2048 2> $blackhole
 
-openssl req -x509 -new -key "$cerDir"myCA.key -out "$cerDir"myCA.cer -days 730 -subj /CN="ios-ipa-server "$ip" Custom CA" 2> $blackhole
+openssl req -x509 -new -key "$cerDir"myCA.key -out "$cerDir"myCA.cer -days 730 -subj /CN="ipapk-server "$ip" Custom CA" 2> $blackhole
 
 openssl genrsa -out "$cerDir"mycert1.key 2048 2> $blackhole
 

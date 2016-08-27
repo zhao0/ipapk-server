@@ -1,4 +1,4 @@
-Install IPA with HTTPS, and auto generate certificates.
+Install ipa,apk via HTTPS, and auto generate certificates. Based on [ios-ipa-server](https://github.com/bumaociyuan/ios-ipa-server)
 
 [中文介绍](./README.md)
 
@@ -12,12 +12,12 @@ Install IPA with HTTPS, and auto generate certificates.
 
 # Installation
 ```
-$ npm install -g ios-ipa-server
+$ npm install -g ipapk-server
 ```
 
 # Usage
 ```
-Usage: ios-ipa-server [option] [dir]
+Usage: ipapk-server [option] [dir]
 
 Options:
 
@@ -26,14 +26,25 @@ Options:
 -p, --port <port-number>  set port for server (defaults is 1234)
 ```
 
+## Prepare
+- Create the following directory
+
+```
+___path-of-ipa-and-apk
+|____ipa
+|____apk
+```
+- place ipa files in ipa folder
+- place apk files in apk folder
+
 ## Start Server
 ```
-$ cd /path/of/ipa
-$ ios-ipa-server
+$ cd path-of-ipa-and-apk
+$ ipapk-server
 
 # or 
 
-$ ios-ipa-server /path/of/ipa
+$ ipapk-server path-of-ipa-and-apk
 
 
 # open https://ip:port/download on your iphone 
@@ -42,11 +53,11 @@ $ ios-ipa-server /path/of/ipa
 ### About `ipa` archive
 * [Ad-hoc](https://developer.apple.com/library/ios/documentation/IDEs/Conceptual/AppDistributionGuide/TestingYouriOSApp/TestingYouriOSApp.html)
 * [Enterprise Distributing](https://developer.apple.com/library/ios/documentation/IDEs/Conceptual/AppDistributionGuide/DistributingEnterpriseProgramApps/DistributingEnterpriseProgramApps.html)
-* For normal developer you can use the [shenzhen](https://github.com/nomad/shenzhen) to build the `ipa`.
+* For normal developer you can use the [shenzhen](https://github.com/nomad/shenzhen)、[gym](https://github.com/fastlame/gym) to build the `ipa`.
 * Highly recommond use static ip address, avoid reinstall cer every time.
 
 ### Install App
-* Open `https://ip:port/download` page.
+* Open `https://ip:port/download` in your phone browser(iPhone user must use Safari).
 * The first time webpage will alert `Cannot Verify Server Identity`, plz click `Details` button, and install the certificate by follow the hint press next and input password.
 * Click the `ipa` link to install `ipa`.
 
@@ -59,18 +70,18 @@ $ ios-ipa-server /path/of/ipa
 
 ```
 # Download source code
-$ git clone git@github.com:bumaociyuan/ios-ipa-server.git
+$ git clone git@github.com:zhao0/ipapk-server.git
 
 # Install modules
-$ cd ios-ipa-server
+$ cd ipapk-server
 $ npm install 
 
 # Make link for debug
 $ npm link
 
 # Run
-$ cd /path/of/ipa
-$ ios-ipa-server
+$ cd path-of-ipa-and-apk
+$ ipapk-server
 ```
 
 # TODO
@@ -79,6 +90,3 @@ $ ios-ipa-server
 - [ ] Support [shenzhen](https://github.com/nomad/shenzhen)
 - [ ] Support upload IPA
 
-
-#Lisence
-[MIT](https://github.com/bumaociyuan/zxIpaServer/blob/master/LICENSE.md)
