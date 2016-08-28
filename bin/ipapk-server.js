@@ -13,9 +13,20 @@ var mustache = require('mustache');
 var strftime = require('strftime');
 var underscore = require('underscore');
 var AdmZip = require('adm-zip');
-
+var AppBundleInfo = require('app-bundle-info');
 var os = require('os');
 require('shelljs/global');
+
+/** 格式化输入字符串**/
+
+//用法: "hello{0}".format('world')；返回'hello world'
+
+String.prototype.format= function(){
+  var args = arguments;
+  return this.replace(/\{(\d+)\}/g,function(s,i){
+    return args[i];
+  });
+}
 
 var ipAddress = underscore
   .chain(require('os').networkInterfaces())
@@ -47,7 +58,7 @@ program
   .parse(process.argv);
 
 var port = program.port || 1234;
-
+var basePath = "https://{0}:{1}".format(ipAddress, port);
 if (!exit.exited) {
   main();
 }
@@ -67,7 +78,7 @@ function before(obj, method, fn) {
 
 function main() {
 
-  console.log('https://' + ipAddress + ':' + port + '/download');
+  console.log(basePath);
   var destinationPath = program.args.shift() || '.';
   var serverDir = destinationPath;
   var ipasDir = serverDir + "/ipa";
@@ -101,7 +112,6 @@ function main() {
     } else {
       filename = ipasDir + '/' + req.params.app;
     }
-    console.log(filename);
 
     // This line opens the file as a readable stream
     var readStream = fs.createReadStream(filename);
@@ -125,17 +135,26 @@ function main() {
       var template = data.toString();
       var items;
       if (req.params.app === 'apk') {
-        items = appItems(apksInLocation(apksDir));
+        items = apksInLocation(apksDir);
       }
       else  {
-        items = appItems(ipasInLocation(ipasDir));
+        items = ipasInLocation(ipasDir);
       }
-      var info = {};
-      info.ip = ipAddress;
-      info.port = port;
-      info.items = items;
-      var rendered = mustache.render(template, info);
-      res.send(rendered);
+      items = items.map(function(item) {
+        return appInfoWithName(item);
+      });
+      Promise.all(items).then(function(result) {
+        var itemInfos = result.sort(function(a, b) {
+          var result = b.time.getTime() - a.time.getTime();
+          // if (result > 0) {result = 1} else if (result < 0) { result = -1 };
+          return result;
+        });
+        var info = {};
+        info.basePath = basePath;
+        info.items = itemInfos;
+        var rendered = mustache.render(template, info);
+        res.send(rendered);
+      });
     })
   });
 
@@ -143,13 +162,10 @@ function main() {
     fs.readFile(path.join(__dirname, '..', 'templates') + '/template.plist', function(err, data) {
       if (err) throw err;
       var template = data.toString();
-
       var rendered = mustache.render(template, {
         name: req.params.file,
-        ip: ipAddress,
-        port: port,
+        basePath: basePath,
       });
-
       res.set('Content-Type', 'text/plain; charset=utf-8');
       // res.set('MIME-Type', 'application/octet-stream');
       res.send(rendered);
@@ -160,93 +176,41 @@ function main() {
 
 }
 
-function appItems(apps) {
-  var items = [];
-  for (var i = apps.length - 1; i >= 0; i--) {
-    items.push(appInfoWithName(apps[i]));
-  };
-  items = items.sort(function(a, b) {
-    var result = b.time.getTime() - a.time.getTime();
-    // if (result > 0) {result = 1} else if (result < 0) { result = -1 };
-    return result;
-  });
-  return items;
-}
-
 function appInfoWithName(filename) {
-  var stat = fs.statSync(filename);
-  var time = new Date(stat.mtime);
-  var timeString = strftime('%F %H:%M', time);
-  var iconString;
-  if (path.extname(filename) === '.ipa') {
-    iconString = getIconFromIpa(filename);
-  } else {
-    iconString = getIconFromApk(filename);
-  }
-  return {
-    name: path.basename(filename, path.extname(filename)),
-    description: '更新: ' + timeString,
-    time: time,
-    iconString: iconString,
-    ip: ipAddress,
-    port: port,
-  }
-}
-
-function getIconFromIpa(filename) {
-  var iconString = '';
-  var exeName = '';
-  if (process.platform == 'darwin') {
-    exeName = 'pngdefry-osx';
-  } else {
-    exeName = 'pngdefry-linux';
-  }
-  var ipa = new AdmZip(filename);
-  var ipaEntries = ipa.getEntries();
-  var tmpIn = __dirname + '/icon.png';
-  var tmpOut = __dirname + '/icon_tmp.png';
-  ipaEntries.forEach(function(ipaEntry) {
-    if (ipaEntry.entryName.indexOf('AppIcon60x60@3x.png') != -1) {
-      var buffer = new Buffer(ipaEntry.getData());
-      if (buffer.length) {
-        fs.writeFileSync(tmpIn, buffer);
-        var result = exec(path.join(__dirname, '..', exeName +' -s _tmp ') + ' ' + tmpIn).output;
-        iconString = 'data:image/png;base64,' + base64_encode(tmpOut);
-      }
+  return new Promise(function(resolve, reject){
+    var stat = fs.statSync(filename);
+    var time = new Date(stat.mtime);
+    var timeString = strftime('%F %H:%M', time);
+    var iconUrl;
+    var url;
+    var name = path.basename(filename, path.extname(filename));
+    if (path.extname(filename) === '.ipa') {
+      iconUrl = "{0}/icon/ipa/{1}".format(basePath, name);
+      url = "itms-services://?action=download-manifest&url={0}/plist/{1}".format(basePath, name);
+    } else {
+      iconUrl = "{0}/icon/apk/{1}".format(basePath, name);
+      url = "{0}/apk/{1}.apk".format(basePath, name);
     }
+    resolve({
+      name: name,
+      description: '更新: ' + timeString,
+      time: time,
+      iconUrl: iconUrl,
+      url: url,
+    })
   });
-  fs.removeSync(tmpIn);
-  fs.removeSync(tmpOut);
-  return iconString;
+//   var apkStream = fs.readFileSync(filename);
+//     AppBundleInfo.autodetect(filename,function(err,bundleInfo){
+//       // console.log(err);
+// //       bundleInfo.getIconFile(function(err,iconStream){
+// //     iconStream.pipe(fs.createWriteStream('icon.png'));
+// // });
+//       bundleInfo.loadInfo(function(err,information){
+//         console.log(information);
+//     });
+//       console.log('getted');
+// });
 }
-
-function getIconFromApk(filename) {
-  var iconString = '';
-  var apk = new AdmZip(filename);
-  var apkEntries = apk.getEntries();
-  var tmpIn = __dirname + '/icon.png';
-  apkEntries.forEach(function(apkEntry) {
-    if (apkEntry.entryName.indexOf('AppIcon60x60@3x.png') != -1) {
-      var buffer = new Buffer(apkEntry.getData());
-      if (buffer.length) {
-        fs.writeFileSync(tmpIn, buffer);
-        iconString = 'data:image/png;base64,' + base64_encode(tmpIn);
-      }
-    }
-  });
-  fs.removeSync(tmpIn);
-  return iconString;
-}
-
-function base64_encode(file) {
-  // read binary data
-  var bitmap = fs.readFileSync(file);
-  // convert binary data to base64 encoded string
-  return new Buffer(bitmap).toString('base64');
-}
-/**
- *
- */
 
 function ipasInLocation(location) {
   return filesInLocation(location,'.ipa');
