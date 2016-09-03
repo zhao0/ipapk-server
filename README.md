@@ -1,3 +1,4 @@
+# 未完成
 自动生成自签名HTTPS服务器，快速安装ipa、apk，基于[ios-ipa-server](https://github.com/bumaociyuan/ios-ipa-server)开发
 
 [README For English](./README-en.md)
