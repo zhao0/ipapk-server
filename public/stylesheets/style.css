@@ -30,6 +30,14 @@ li {
   	align-items: center;
 }
 
+#nav {
+	display: -webkit-flex;
+  	display: flex;
+  	flex-direction: row;
+  	justify-content: space-around;
+  	align-items: center;
+}
+
 .info {
 	flex-grow: 2;
 	margin-left: 10px;
@@ -55,10 +63,4 @@ li {
 	border: 1px solid #00B7FF;
 	border-radius: 10%;
 	padding: 4px 8px;
-}
-
-.icon {
-	width: 20%;
-	border-radius: 22%;
-	border: 1px solid lightgray;
 }

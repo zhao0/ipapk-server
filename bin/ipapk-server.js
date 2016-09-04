@@ -12,9 +12,8 @@ var express = require('express');
 var mustache = require('mustache');
 var strftime = require('strftime');
 var underscore = require('underscore');
-var AdmZip = require('adm-zip');
-var AppBundleInfo = require('app-bundle-info');
 var os = require('os');
+var parseApk = require('apk-parser3');
 require('shelljs/global');
 
 /** 格式化输入字符串**/
@@ -181,35 +180,41 @@ function appInfoWithName(filename) {
     var stat = fs.statSync(filename);
     var time = new Date(stat.mtime);
     var timeString = strftime('%F %H:%M', time);
-    var iconUrl;
     var url;
     var name = path.basename(filename, path.extname(filename));
     if (path.extname(filename) === '.ipa') {
-      iconUrl = "{0}/icon/ipa/{1}".format(basePath, name);
       url = "itms-services://?action=download-manifest&url={0}/plist/{1}".format(basePath, name);
     } else {
-      iconUrl = "{0}/icon/apk/{1}".format(basePath, name);
       url = "{0}/apk/{1}.apk".format(basePath, name);
     }
+parseApk(filename, function (err, data) {
+	if (err) {
+		console.log(err);
+	} else {
+		var result = {};
+		parseText(data.package,result);
+		parseText(data.application,result);
+   		console.log(result);
+	}
+});
     resolve({
       name: name,
       description: '更新: ' + timeString,
       time: time,
-      iconUrl: iconUrl,
       url: url,
     })
   });
-//   var apkStream = fs.readFileSync(filename);
-//     AppBundleInfo.autodetect(filename,function(err,bundleInfo){
-//       // console.log(err);
-// //       bundleInfo.getIconFile(function(err,iconStream){
-// //     iconStream.pipe(fs.createWriteStream('icon.png'));
-// // });
-//       bundleInfo.loadInfo(function(err,information){
-//         console.log(information);
-//     });
-//       console.log('getted');
-// });
+    
+}
+
+function parseText(text,result) {
+	var info = text.trim().split(' ');
+	for (var i = info.length - 1; i >= 0; i--) {
+		var kvs = info[i].split('=');
+		if (kvs.length == 2) {
+			result[kvs[0]] = kvs[1];
+		}
+	}
 }
 
 function ipasInLocation(location) {
