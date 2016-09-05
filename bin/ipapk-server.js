@@ -103,29 +103,8 @@ function main() {
   var app = express();
   app.use('/public', express.static(path.join(__dirname, '..', 'public')));
   app.use('/cer', express.static(globalCerFolder));
-
-  app.get(['/ipa/:app', '/apk/:app'], function(req, res) {
-    var filename;
-    if (path.extname(req.params.app) === '.apk') {
-      filename = apksDir + '/' + req.params.app;
-    } else {
-      filename = ipasDir + '/' + req.params.app;
-    }
-
-    // This line opens the file as a readable stream
-    var readStream = fs.createReadStream(filename);
-
-    // This will wait until we know the readable stream is actually valid before piping
-    readStream.on('open', function() {
-      // This just pipes the read stream to the response object (which goes to the client)
-      readStream.pipe(res);
-    });
-
-    // This catches any errors that happen while creating the readable stream (usually invalid names)
-    readStream.on('error', function(err) {
-      res.end(err);
-    });
-  });
+  app.use('/ipa', express.static(ipasDir));
+  app.use('/apk', express.static(apksDir));
 
   app.get(['/', '/download/:app'], function(req, res, next) {
 
