@@ -187,16 +187,16 @@ function appInfoWithName(filename) {
     } else {
       url = "{0}/apk/{1}.apk".format(basePath, name);
     }
-parseApk(filename, function (err, data) {
-	if (err) {
-		console.log(err);
-	} else {
-		var result = {};
-		parseText(data.package,result);
-		parseText(data.application,result);
-   		console.log(result);
-	}
-});
+// parseApk(filename, function (err, data) {
+// 	if (err) {
+// 		console.log(err);
+// 	} else {
+// 		var result = {};
+// 		parseText(data.package,result);
+// 		parseText(data.application,result);
+//    		console.log(result);
+// 	}
+// });
     resolve({
       name: name,
       description: '更新: ' + timeString,
