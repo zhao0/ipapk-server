@@ -13,7 +13,6 @@ var mustache = require('mustache');
 var strftime = require('strftime');
 var underscore = require('underscore');
 var os = require('os');
-var parseApk = require('apk-parser3');
 require('shelljs/global');
 
 /** 格式化输入字符串**/
@@ -166,16 +165,6 @@ function appInfoWithName(filename) {
     } else {
       url = "{0}/apk/{1}.apk".format(basePath, name);
     }
-// parseApk(filename, function (err, data) {
-// 	if (err) {
-// 		console.log(err);
-// 	} else {
-// 		var result = {};
-// 		parseText(data.package,result);
-// 		parseText(data.application,result);
-//    		console.log(result);
-// 	}
-// });
     resolve({
       name: name,
       description: '更新: ' + timeString,

@@ -1,8 +1,6 @@
 # 未完成
 自动生成自签名HTTPS服务器，快速安装ipa、apk，基于[ios-ipa-server](https://github.com/bumaociyuan/ios-ipa-server)开发
 
-[README For English](./README-en.md)
-
 # 支持
 * OS X
 * Ubuntu
@@ -62,28 +60,3 @@ $ ipapk-server path-of-ipa-and-apk
 ![simulator screen shot jun 22 2016 2 45 19 pm 2](https://cloud.githubusercontent.com/assets/4977911/16257320/66c5ff7e-388a-11e6-827a-b5708b86e272.png)
 # 效果图
 ![screeshot](screeshot.png)
-
-
-# 开发
-
-```
-# 下载源码
-$ git clone git@github.com:zhao0/ipapk-server.git
-
-# 安装依赖包
-$ cd ipapk-server
-$ npm install 
-
-# 建立link 方便调试
-$ npm link
-
-# 运行
-$ cd /path/of/ipa
-$ ipapk-server
-```
-
-# TODO
-
-- [ ] 支持多语言
-- [ ] 支持[shenzhen](https://github.com/nomad/shenzhen)
-- [ ] 支持上传IPA
