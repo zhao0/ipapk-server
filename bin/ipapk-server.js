@@ -13,6 +13,7 @@ var mustache = require('mustache');
 var strftime = require('strftime');
 var underscore = require('underscore');
 var os = require('os');
+var multiparty = require('multiparty');
 require('shelljs/global');
 
 /** 格式化输入字符串**/
@@ -104,7 +105,6 @@ function main() {
   app.use('/cer', express.static(globalCerFolder));
   app.use('/ipa', express.static(ipasDir));
   app.use('/apk', express.static(apksDir));
-
   app.get(['/', '/download/:app'], function(req, res, next) {
 
     fs.readFile(path.join(__dirname, '..', 'templates') + '/download.html', function(err, data) {
@@ -144,9 +144,32 @@ function main() {
         basePath: basePath,
       });
       res.set('Content-Type', 'text/plain; charset=utf-8');
-      // res.set('MIME-Type', 'application/octet-stream');
       res.send(rendered);
     })
+  });
+
+  app.post('/upload', function(req, res) {
+    var form = new multiparty.Form();
+
+    form.parse(req, function(err, fields, files) {
+      var obj = files.package[0];
+      var tmp_path = obj.path;
+      var new_path;
+      if (path.extname(obj.originalFilename) === ".ipa") {
+        new_path = path.join(ipasDir, obj.originalFilename);
+      } else if (path.extname(obj.originalFilename) === ".apk") {
+        new_path = path.join(apksDir, obj.originalFilename);
+      } else {
+        res.send("file type error");
+        return;
+      }
+      fs.rename(tmp_path,new_path,function(err){  
+          if(err){  
+              throw err;  
+          }
+      })
+      res.send("succeed");
+    });
   });
 
   https.createServer(options, app).listen(port);

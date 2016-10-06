@@ -46,6 +46,9 @@ $ ipapk-server path-of-ipa-and-apk
 # open https://ip:port/download on your iphone
 # 推荐使用pm2等进程管理运行服务
 ```
+## 包上传
+* 可直接放入上述文件夹内
+* 通过api上传 `curl 'https://ip:port/upload' -F "package=@文件路径" --insecure`，不能去掉`@`。
 
 ### 安装app
 * 手机使用浏览器(iOS必须使用Safari)打开`https://ip:port/download`页面
@@ -55,3 +58,7 @@ $ ipapk-server path-of-ipa-and-apk
 ![simulator screen shot jun 22 2016 2 45 19 pm 2](https://cloud.githubusercontent.com/assets/4977911/16257320/66c5ff7e-388a-11e6-827a-b5708b86e272.png)
 # 效果图
 ![screeshot](screeshot.png)
+
+# TODO
+- 显示icon
+- 解析包信息
