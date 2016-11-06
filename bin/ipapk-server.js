@@ -14,6 +14,7 @@ var strftime = require('strftime');
 var underscore = require('underscore');
 var os = require('os');
 var multiparty = require('multiparty');
+var sqlite3 = require('sqlite3');  
 require('shelljs/global');
 
 /** 格式化输入字符串**/
@@ -36,9 +37,30 @@ var ipAddress = underscore
   })
   .value()
   .address;
-
+var serverDir = os.homedir() + "/ipapk-server"
 
 var globalCerFolder = os.homedir() + '/.ipapk-server/' + ipAddress;
+if (!fs.existsSync(serverDir)) {  
+    fs.mkdirSync(serverDir, function (err) {
+        if (err) {
+            console.log(err);
+            return;
+        }
+    });
+}
+var db = new sqlite3.Database(serverDir + '/db.sqlite3');
+db.run("CREATE TABLE IF NOT EXISTS info (\
+  id integer PRIMARY KEY autoincrement,\
+  guid TEXT,\
+  bundleID TEXT,\
+  version TEXT,\
+  build TEXT,\
+  icon TEXT,\
+  name TEXT,\
+  uploadTime datetime default (datetime('now', 'localtime')),\
+  platform int\
+  )");
+db.close();
 /**
  * Main program.
  */
@@ -59,7 +81,7 @@ program
 var port = program.port || 1234;
 var basePath = "https://{0}:{1}".format(ipAddress, port);
 if (!exit.exited) {
-  main();
+  // main();
 }
 
 /**

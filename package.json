@@ -11,6 +11,7 @@
     "multiparty": "^4.1.2",
     "mustache": "^2.1.2",
     "shelljs": "^0.7.0",
+    "sqlite3": "^3.1.8",
     "strftime": "^0.9.2",
     "underscore": "^1.8.3"
   },
