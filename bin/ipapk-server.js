@@ -6,7 +6,7 @@ var path = require('path');
 var exit = process.exit;
 var pkg = require('../package.json');
 var version = pkg.version;
-
+var AdmZip = require("adm-zip")
 var program = require('commander');
 var express = require('express');
 var mustache = require('mustache');
@@ -15,6 +15,9 @@ var underscore = require('underscore');
 var os = require('os');
 var multiparty = require('multiparty');
 var sqlite3 = require('sqlite3');  
+var Guid = require("Guid")
+var AppBundleInfo = require("app-bundle-info")
+var cgbiToPng = require('cgbi-to-png');
 require('shelljs/global');
 
 /** 格式化输入字符串**/
@@ -37,16 +40,25 @@ var ipAddress = underscore
   })
   .value()
   .address;
-var serverDir = os.homedir() + "/ipapk-server"
 
 var globalCerFolder = os.homedir() + '/.ipapk-server/' + ipAddress;
-if (!fs.existsSync(serverDir)) {  
-    fs.mkdirSync(serverDir, function (err) {
+var serverDir = os.homedir() + "/ipapk-server"
+var ipasDir = serverDir + "/ipa";
+var apksDir = serverDir + "/apk";
+var iconsDir = serverDir + "/icon";
+createFolderIfNeeded(serverDir)
+createFolderIfNeeded(ipasDir)
+createFolderIfNeeded(apksDir)
+createFolderIfNeeded(iconsDir)
+function createFolderIfNeeded (path) {
+  if (!fs.existsSync(path)) {  
+    fs.mkdirSync(path, function (err) {
         if (err) {
             console.log(err);
             return;
         }
     });
+  }
 }
 var db = new sqlite3.Database(serverDir + '/db.sqlite3');
 db.run("CREATE TABLE IF NOT EXISTS info (\
@@ -81,7 +93,7 @@ program
 var port = program.port || 1234;
 var basePath = "https://{0}:{1}".format(ipAddress, port);
 if (!exit.exited) {
-  // main();
+  main();
 }
 
 /**
@@ -100,10 +112,6 @@ function before(obj, method, fn) {
 function main() {
 
   console.log(basePath);
-  var destinationPath = program.args.shift() || '.';
-  var serverDir = destinationPath;
-  var ipasDir = serverDir + "/ipa";
-  var apksDir = serverDir + "/apk";
 
   var key;
   var cert;
@@ -176,20 +184,22 @@ function main() {
     form.parse(req, function(err, fields, files) {
       var obj = files.package[0];
       var tmp_path = obj.path;
+      var guid = Guid.create();
       var new_path;
       if (path.extname(obj.originalFilename) === ".ipa") {
-        new_path = path.join(ipasDir, obj.originalFilename);
+        new_path = path.join(ipasDir, guid + ".ipa");
       } else if (path.extname(obj.originalFilename) === ".apk") {
-        new_path = path.join(apksDir, obj.originalFilename);
+        new_path = path.join(apksDir, guid + ".apk");
       } else {
         res.send("file type error");
         return;
       }
       fs.rename(tmp_path,new_path,function(err){  
-          if(err){  
-              throw err;  
-          }
+        if(err){  
+            throw err;  
+        }
       })
+      parseIpa(new_path)
       res.send("succeed");
     });
   });
@@ -217,7 +227,31 @@ function appInfoWithName(filename) {
       url: url,
     })
   });
-    
+}
+
+function parseIpa(filename,guiid) {
+    var abi = new AppBundleInfo.iOS(fs.createReadStream(filename));
+    var info = {}
+    abi.getPlist(function(err,data){
+        if(err) 
+          console.log(err);
+        else {
+            info["build"] = data.CFBundleVersion,
+            info["bundleID"] = data.CFBundleIdentifier,
+            info["version"] = data.CFBundleShortVersionString,
+            info["name"] = data.CFBundleName
+        }
+    });
+    var ipa = new AdmZip(filename);
+    var ipaEntries = ipa.getEntries();
+    ipaEntries.forEach(function(ipaEntry) {
+      if (ipaEntry.entryName.indexOf('AppIcon60x60@3x.png') != -1) {
+        cgbiToPng(new Buffer(ipaEntry.getData()),function(err,pngStream){
+          if (err) {console.log(err)}
+            // pngStream.pipe(...)
+        })
+      }
+    });
 }
 
 function parseText(text,result) {
@@ -230,21 +264,3 @@ function parseText(text,result) {
 	}
 }
 
-function ipasInLocation(location) {
-  return filesInLocation(location,'.ipa');
-}
-
-function apksInLocation(location) {
-  return filesInLocation(location,'.apk');
-}
-
-function filesInLocation(location,type) {
-  var result = [];
-  var files = fs.readdirSync(location);
-  for (var i in files) {
-    if (path.extname(files[i]) === type) {
-      result.push(path.join(location, files[i]));
-    }
-  }
-  return result;
-}
