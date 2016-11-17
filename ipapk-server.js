@@ -4,7 +4,7 @@ var fs = require('fs-extra');
 var https = require('https');
 var path = require('path');
 var exit = process.exit;
-var pkg = require('../package.json');
+var pkg = require('./package.json');
 var version = pkg.version;
 var AdmZip = require("adm-zip")
 var program = require('commander');
@@ -67,10 +67,9 @@ db.run("CREATE TABLE IF NOT EXISTS info (\
   bundleID TEXT,\
   version TEXT,\
   build TEXT,\
-  icon TEXT,\
   name TEXT,\
   uploadTime datetime default (datetime('now', 'localtime')),\
-  platform int\
+  platform TEXT\
   )");
 db.close();
 /**
@@ -180,32 +179,56 @@ function main() {
 
   app.post('/upload', function(req, res) {
     var form = new multiparty.Form();
-
     form.parse(req, function(err, fields, files) {
       var obj = files.package[0];
       var tmp_path = obj.path;
-      var guid = Guid.create();
-      var new_path;
-      if (path.extname(obj.originalFilename) === ".ipa") {
-        new_path = path.join(ipasDir, guid + ".ipa");
-      } else if (path.extname(obj.originalFilename) === ".apk") {
-        new_path = path.join(apksDir, guid + ".apk");
-      } else {
-        res.send("file type error");
-        return;
-      }
-      fs.rename(tmp_path,new_path,function(err){  
-        if(err){  
-            throw err;  
-        }
-      })
-      parseIpa(new_path)
-      res.send("succeed");
+      parseAppAndInsertToDb(tmp_path, info => {
+        storeApp(tmp_path, info["guid"],error => {
+          if (error) {
+            errorHandler(error,res)
+          }
+        })
+        res.send(info)
+      }, error => {
+        errorHandler(error,res)
+      });
     });
   });
 
   https.createServer(options, app).listen(port);
+}
 
+function errorHandler(error, res) {
+  console.log(error)
+  res.send({"error":error})
+}
+
+function parseAppAndInsertToDb(filePath, callback, errorCallback) {
+  var guid = Guid.create();
+  Promise.all([parseIpa(filePath),extractIpaIcon(filePath,guid)]).then(values => {
+    var info = values[0]
+    info["guid"] = guid
+    db.run("INSERT INTO info (guid, platform, build, bundleID, version, name) VALUES (?, ?, ?, ?, ?, ?);",
+    [info["guid"], info["platform"], info["build"], info["bundleID"], info["version"], info["name"]],function(error){
+        if (error){
+            callback(info)
+        } else {
+          errorCallback(error)
+        }
+    });
+  }, reason => {
+    errorCallback(reason)
+  })
+}
+
+function storeApp(fileName, guid, callback) {
+  var new_path;
+  if (path.extname(fileName) === ".ipa") {
+    new_path = path.join(ipasDir, guid + ".ipa");
+  } else if (path.extname(fileName) === ".apk") {
+    new_path = path.join(apksDir, guid + ".apk");
+  }
+  fs.rename(fileName,new_path,callback)
 }
 
 function appInfoWithName(filename) {
@@ -229,29 +252,66 @@ function appInfoWithName(filename) {
   });
 }
 
-function parseIpa(filename,guiid) {
+function parseIpa(filename) {
+  return new Promise(function(resolve,reject){
     var abi = new AppBundleInfo.iOS(fs.createReadStream(filename));
     var info = {}
+    info["platform"] = abi.type
     abi.getPlist(function(err,data){
         if(err) 
-          console.log(err);
+          reject(err);
         else {
-            info["build"] = data.CFBundleVersion,
-            info["bundleID"] = data.CFBundleIdentifier,
-            info["version"] = data.CFBundleShortVersionString,
-            info["name"] = data.CFBundleName
+          info["build"] = data.CFBundleVersion,
+          info["bundleID"] = data.CFBundleIdentifier,
+          info["version"] = data.CFBundleShortVersionString,
+          info["name"] = data.CFBundleName
+          resolve(info)
         }
     });
-    var ipa = new AdmZip(filename);
-    var ipaEntries = ipa.getEntries();
-    ipaEntries.forEach(function(ipaEntry) {
-      if (ipaEntry.entryName.indexOf('AppIcon60x60@3x.png') != -1) {
-        cgbiToPng(new Buffer(ipaEntry.getData()),function(err,pngStream){
-          if (err) {console.log(err)}
-            // pngStream.pipe(...)
-        })
-      }
-    });
+  });
+}
+
+function extractIpaIcon(filename,guid) {
+  return new Promise(function(resolve,reject){
+    var tmpOut = iconsDir + "/{0}.png".format(guid)
+    var zip = new AdmZip(filename); 
+    var ipaEntries = zip.getEntries();
+    var exeName = '';
+    if (process.platform == 'darwin') {
+      exeName = 'pngdefry-osx';
+    } else {
+      exeName = 'pngdefry-linux';
+    }
+    try {
+      ipaEntries.forEach(function(ipaEntry) {
+        if (ipaEntry.entryName.indexOf('AppIcon60x60@3x.png') != -1) {
+          var buffer = new Buffer(ipaEntry.getData());
+          if (buffer.length) {
+            fs.writeFile(tmpOut, buffer,function(err){  
+              if(err){  
+                  reject(err)
+              }
+              exec(path.join(__dirname, 'bin', exeName + ' -s _tmp ') + ' ' + tmpOut);
+              fs.remove(tmpOut,function(err){  
+                if(err){
+                    reject(err)
+                }
+                var tmp_path = iconsDir + "/{0}_tmp.png".format(guid)
+                fs.rename(tmp_path,tmpOut,function(err){
+                  if(err){
+                    reject(err)
+                  }
+                  resolve({"success":true});
+                })
+              })
+            })
+          }
+        }
+      });
+    } catch (e) {
+      reject(e)
+    }
+  })
 }
 
 function parseText(text,result) {
