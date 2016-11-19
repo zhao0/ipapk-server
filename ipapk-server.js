@@ -17,7 +17,7 @@ var multiparty = require('multiparty');
 var sqlite3 = require('sqlite3');  
 var Guid = require("Guid")
 var AppBundleInfo = require("app-bundle-info")
-var cgbiToPng = require('cgbi-to-png');
+var apkParser3 = require("apk-parser3")
 require('shelljs/global');
 
 /** 格式化输入字符串**/
@@ -188,6 +188,7 @@ function main() {
             errorHandler(error,res)
           }
         })
+        console.log(info)
         res.send(info)
       }, error => {
         errorHandler(error,res)
@@ -204,14 +205,22 @@ function errorHandler(error, res) {
 }
 
 function parseAppAndInsertToDb(filePath, callback, errorCallback) {
-  var guid = Guid.create();
-  Promise.all([parseIpa(filePath),extractIpaIcon(filePath,guid)]).then(values => {
+  var guid = Guid.create().toString();
+  var parse, extract
+  if (path.extname(filePath) === ".ipa") {
+    parse = parseIpa
+    extract = extractIpaIcon
+  } else if (path.extname(filePath) === ".apk") {
+    parse = parseApk
+    extract = extractApkIcon
+  }
+  Promise.all([parse(filePath),extract(filePath,guid)]).then(values => {
     var info = values[0]
     info["guid"] = guid
     db.run("INSERT INTO info (guid, platform, build, bundleID, version, name) VALUES (?, ?, ?, ?, ?, ?);",
     [info["guid"], info["platform"], info["build"], info["bundleID"], info["version"], info["name"]],function(error){
         if (error){
-            callback(info)
+          callback(info)
         } else {
           errorCallback(error)
         }
@@ -271,6 +280,61 @@ function parseIpa(filename) {
   });
 }
 
+function parseApk(filename) {
+  return new Promise(function(resolve,reject){
+    apkParser3(filename, function (err, data) {
+        var package = parseText(data.package)
+        var info = {
+          "name":data["application-label"],
+          "build":package.versionCode,
+          "bundleID":package.name,
+          "version":package.versionName,
+          "platform":"android"
+        }
+        resolve(info)
+    });
+  });
+}
+
+function parseText(text) {
+  var regx = /(\w+)='([\w\.\d]+)'/g
+  var match = null, result = {}
+  while(match = regx.exec(text)) {
+    result[match[1]] = match[2]
+  }
+  return result
+}
+
+function extractApkIcon(filename,guid) {
+  return new Promise(function(resolve,reject){
+    apkParser3(filename, function (err, data) {
+      var iconPath = data["application-icon-640"]
+      iconPath = iconPath.replace(/'/g,"")
+      var tmpOut = iconsDir + "/{0}.png".format(guid)
+      var zip = new AdmZip(filename); 
+      var ipaEntries = zip.getEntries();
+      var found = false
+      ipaEntries.forEach(function(ipaEntry) {
+        if (ipaEntry.entryName.indexOf(iconPath) != -1) {
+          var buffer = new Buffer(ipaEntry.getData());
+          if (buffer.length) {
+            found = true
+            fs.writeFile(tmpOut, buffer,function(err){  
+              if(err){  
+                  reject(err)
+              }
+              resolve({"success":true})
+            })
+          }
+        }
+      })
+      if (!found) {
+        reject("can not find icon ")
+      }
+    });
+  })
+}
+
 function extractIpaIcon(filename,guid) {
   return new Promise(function(resolve,reject){
     var tmpOut = iconsDir + "/{0}.png".format(guid)
@@ -312,15 +376,5 @@ function extractIpaIcon(filename,guid) {
       reject(e)
     }
   })
-}
-
-function parseText(text,result) {
-	var info = text.trim().split(' ');
-	for (var i = info.length - 1; i >= 0; i--) {
-		var kvs = info[i].split('=');
-		if (kvs.length == 2) {
-			result[kvs[0]] = kvs[1];
-		}
-	}
 }
 
