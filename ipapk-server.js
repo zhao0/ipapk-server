@@ -60,8 +60,20 @@ function createFolderIfNeeded (path) {
     });
   }
 }
-var db = new sqlite3.Database(serverDir + '/db.sqlite3');
-db.run("CREATE TABLE IF NOT EXISTS info (\
+
+function excuteDB(cmd, params, callback) {
+  var db = new sqlite3.Database(serverDir + '/db.sqlite3');
+  db.run(cmd, params, callback);
+  db.close();
+}
+
+function queryDB(cmd, params, callback) {
+  var db = new sqlite3.Database(serverDir + '/db.sqlite3');
+  db.all(cmd, params, callback);
+  db.close();
+}
+
+excuteDB("CREATE TABLE IF NOT EXISTS info (\
   id integer PRIMARY KEY autoincrement,\
   guid TEXT,\
   bundleID TEXT,\
@@ -71,7 +83,6 @@ db.run("CREATE TABLE IF NOT EXISTS info (\
   uploadTime datetime default (datetime('now', 'localtime')),\
   platform TEXT\
   )");
-db.close();
 /**
  * Main program.
  */
@@ -134,34 +145,18 @@ function main() {
   app.use('/cer', express.static(globalCerFolder));
   app.use('/ipa', express.static(ipasDir));
   app.use('/apk', express.static(apksDir));
-  app.get(['/', '/download/:app'], function(req, res, next) {
-
-    fs.readFile(path.join(__dirname, '..', 'templates') + '/download.html', function(err, data) {
-      if (err) throw err;
-      var template = data.toString();
-      var items;
-      if (req.params.app === 'apk') {
-        items = apksInLocation(apksDir);
+  app.use('/icon', express.static(iconsDir));
+  app.get(['/apps/:app'], function(req, res, next) {
+      res.set('Content-Type', 'application/json');
+      if (req.params.app === 'android' || req.params.app === 'ios') {
+        queryDB("select * from info where platform=? group by bundleID", [req.params.app], function(error, result) {
+          if (result) {
+            res.send(mapIconAndUrl(result))
+          } else {
+            errorHandler(error, res)
+          }
+        })
       }
-      else  {
-        items = ipasInLocation(ipasDir);
-      }
-      items = items.map(function(item) {
-        return appInfoWithName(item);
-      });
-      Promise.all(items).then(function(result) {
-        var itemInfos = result.sort(function(a, b) {
-          var result = b.time.getTime() - a.time.getTime();
-          // if (result > 0) {result = 1} else if (result < 0) { result = -1 };
-          return result;
-        });
-        var info = {};
-        info.basePath = basePath;
-        info.items = itemInfos;
-        var rendered = mustache.render(template, info);
-        res.send(rendered);
-      });
-    })
   });
 
   app.get('/plist/:file', function(req, res) {
@@ -204,6 +199,19 @@ function errorHandler(error, res) {
   res.send({"error":error})
 }
 
+function mapIconAndUrl(result) {
+  var items = result.map(function(item) {
+    item.icon = "{0}/icon/{1}.png".format(basePath, item.guid);
+    if (item.platform === 'ios') {
+      item.url = "itms-services://?action=download-manifest&url={0}/plist/{1}".format(basePath, item.guid);
+    } else if (item.platform === 'android') {
+      item.url = "{0}/apk/{1}.apk".format(basePath, item.guid);
+    }
+    return item;
+  })
+  return items;
+}
+
 function parseAppAndInsertToDb(filePath, callback, errorCallback) {
   var guid = Guid.create().toString();
   var parse, extract
@@ -217,9 +225,9 @@ function parseAppAndInsertToDb(filePath, callback, errorCallback) {
   Promise.all([parse(filePath),extract(filePath,guid)]).then(values => {
     var info = values[0]
     info["guid"] = guid
-    db.run("INSERT INTO info (guid, platform, build, bundleID, version, name) VALUES (?, ?, ?, ?, ?, ?);",
+    excuteDB("INSERT INTO info (guid, platform, build, bundleID, version, name) VALUES (?, ?, ?, ?, ?, ?);",
     [info["guid"], info["platform"], info["build"], info["bundleID"], info["version"], info["name"]],function(error){
-        if (error){
+        if (!error){
           callback(info)
         } else {
           errorCallback(error)
@@ -247,11 +255,6 @@ function appInfoWithName(filename) {
     var timeString = strftime('%F %H:%M', time);
     var url;
     var name = path.basename(filename, path.extname(filename));
-    if (path.extname(filename) === '.ipa') {
-      url = "itms-services://?action=download-manifest&url={0}/plist/{1}".format(basePath, name);
-    } else {
-      url = "{0}/apk/{1}.apk".format(basePath, name);
-    }
     resolve({
       name: name,
       description: '更新: ' + timeString,
@@ -285,7 +288,7 @@ function parseApk(filename) {
     apkParser3(filename, function (err, data) {
         var package = parseText(data.package)
         var info = {
-          "name":data["application-label"],
+          "name":data["application-label"].replace(/'/g,""),
           "build":package.versionCode,
           "bundleID":package.name,
           "version":package.versionName,
