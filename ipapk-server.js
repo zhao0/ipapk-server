@@ -40,7 +40,7 @@ var ipAddress = underscore
   })
   .value()
   .address;
-
+var pageCount = 15;
 var globalCerFolder = os.homedir() + '/.ipapk-server/' + ipAddress;
 var serverDir = os.homedir() + "/ipapk-server"
 var ipasDir = serverDir + "/ipa";
@@ -146,10 +146,25 @@ function main() {
   app.use('/ipa', express.static(ipasDir));
   app.use('/apk', express.static(apksDir));
   app.use('/icon', express.static(iconsDir));
-  app.get(['/apps/:app'], function(req, res, next) {
+  app.get(['/apps/:platform'], function(req, res, next) {
       res.set('Content-Type', 'application/json');
-      if (req.params.app === 'android' || req.params.app === 'ios') {
-        queryDB("select * from info where platform=? group by bundleID", [req.params.app], function(error, result) {
+      var page = parseInt(req.params.page ? req.params.page : 1);
+      if (req.params.platform === 'android' || req.params.platform === 'ios') {
+        queryDB("select * from info where platform=? group by bundleID limit ?,?", [req.params.platform, (page - 1) * pageCount, page * pageCount], function(error, result) {
+          if (result) {
+            res.send(mapIconAndUrl(result))
+          } else {
+            errorHandler(error, res)
+          }
+        })
+      }
+  });
+
+  app.get(['/apps/:platform/:bundleID', '/apps/:platform/:bundleID/:page'], function(req, res, next) {
+      res.set('Content-Type', 'application/json');
+      var page = parseInt(req.params.page ? req.params.page : 1);
+      if (req.params.platform === 'android' || req.params.platform === 'ios') {
+        queryDB("select * from info where platform=? and bundleID=? limit ?,? ", [req.params.platform, req.params.bundleID, (page - 1) * pageCount, page * pageCount], function(error, result) {
           if (result) {
             res.send(mapIconAndUrl(result))
           } else {
