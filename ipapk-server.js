@@ -16,7 +16,7 @@ var os = require('os');
 var multiparty = require('multiparty');
 var sqlite3 = require('sqlite3');  
 var Guid = require("Guid")
-var AppBundleInfo = require("app-bundle-info")
+var extract = require('ipa-extract-info');
 var apkParser3 = require("apk-parser3")
 require('shelljs/global');
 
@@ -281,19 +281,17 @@ function appInfoWithName(filename) {
 
 function parseIpa(filename) {
   return new Promise(function(resolve,reject){
-    var abi = new AppBundleInfo.iOS(fs.createReadStream(filename));
-    var info = {}
-    info["platform"] = abi.type
-    abi.getPlist(function(err,data){
-        if(err) 
-          reject(err);
-        else {
-          info["build"] = data.CFBundleVersion,
-          info["bundleID"] = data.CFBundleIdentifier,
-          info["version"] = data.CFBundleShortVersionString,
-          info["name"] = data.CFBundleName
-          resolve(info)
-        }
+    var fd = fs.openSync(filename, 'r');
+    extract(fd, function(err, info, raw){
+    if (err) reject(err);
+      var data = info[0];
+      var info = {}
+      info["platform"] = "ios"
+      info["build"] = data.CFBundleVersion,
+      info["bundleID"] = data.CFBundleIdentifier,
+      info["version"] = data.CFBundleShortVersionString,
+      info["name"] = data.CFBundleName
+      resolve(info)
     });
   });
 }
