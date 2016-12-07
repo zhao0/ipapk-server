@@ -15,7 +15,7 @@ var underscore = require('underscore');
 var os = require('os');
 var multiparty = require('multiparty');
 var sqlite3 = require('sqlite3');  
-var Guid = require("Guid")
+var Guid = require("guid")
 var extract = require('ipa-extract-info');
 var apkParser3 = require("apk-parser3")
 require('shelljs/global');
@@ -130,7 +130,7 @@ function main() {
     key = fs.readFileSync(globalCerFolder + '/mycert1.key', 'utf8');
     cert = fs.readFileSync(globalCerFolder + '/mycert1.cer', 'utf8');
   } catch (e) {
-    var result = exec('sh  ' + path.join(__dirname, '..', 'generate-certificate.sh') + ' ' + ipAddress).output;
+    var result = exec('sh  ' + path.join(__dirname, 'bin', 'generate-certificate.sh') + ' ' + ipAddress).output;
     key = fs.readFileSync(globalCerFolder + '/mycert1.key', 'utf8');
     cert = fs.readFileSync(globalCerFolder + '/mycert1.cer', 'utf8');
   }
@@ -141,7 +141,6 @@ function main() {
   };
 
   var app = express();
-  app.use('/public', express.static(path.join(__dirname, '..', 'public')));
   app.use('/cer', express.static(globalCerFolder));
   app.use('/ipa', express.static(ipasDir));
   app.use('/apk', express.static(apksDir));
