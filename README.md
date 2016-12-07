@@ -1,3 +1,4 @@
+## web 页面未完成
 自动生成自签名HTTPS服务器，快速安装ipa、apk，基于[ios-ipa-server](https://github.com/bumaociyuan/ios-ipa-server)开发
 
 # 支持
@@ -152,11 +153,7 @@ response:
 ]
 ```
 
-### 安装app
-* 手机使用浏览器(iOS必须使用Safari)打开`https://ip:port/download`页面
-* 第一次打开会弹出警告`无法验证服务器`，请点击`详细信息`按钮安装证书，按指示一直点击下一步和完成(**强烈推荐使用静态IP，避免每次重新安装证书**)
-* 点击`下载`在线安装`ipa`
-
 # TODO
 - 加入ChangeLog
+- web页面
 - token验证
