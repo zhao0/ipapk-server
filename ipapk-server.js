@@ -146,6 +146,7 @@ function main() {
   app.use('/apk', express.static(apksDir));
   app.use('/icon', express.static(iconsDir));
   app.get(['/apps/:platform'], function(req, res, next) {
+  	  res.set('Access-Control-Allow-Origin','*');
       res.set('Content-Type', 'application/json');
       var page = parseInt(req.params.page ? req.params.page : 1);
       if (req.params.platform === 'android' || req.params.platform === 'ios') {
@@ -160,6 +161,7 @@ function main() {
   });
 
   app.get(['/apps/:platform/:bundleID', '/apps/:platform/:bundleID/:page'], function(req, res, next) {
+  	  res.set('Access-Control-Allow-Origin','*');
       res.set('Content-Type', 'application/json');
       var page = parseInt(req.params.page ? req.params.page : 1);
       if (req.params.platform === 'android' || req.params.platform === 'ios') {
@@ -182,6 +184,7 @@ function main() {
         basePath: basePath,
       });
       res.set('Content-Type', 'text/plain; charset=utf-8');
+  	  res.set('Access-Control-Allow-Origin','*');
       res.send(rendered);
     })
   });
