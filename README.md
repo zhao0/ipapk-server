@@ -50,7 +50,8 @@ POST /upload
 param: 
 
 ```
-package:安装包文件
+package:安装包文件, reqiured
+changelog:ChangeLog, optional
 ```
 response:
 
@@ -93,7 +94,8 @@ response:
 		name: "Hugo",
 		uploadTime: "2016-12-01 20:50:05",
 		platform: "ios",
-		url: "itms-services://?action=download-manifest&url=https://10.20.30.233:1234/plist/46269d71-9fda-76fc-3442-a118d6b08bf1"
+		url: "itms-services://?action=download-manifest&url=https://10.20.30.233:1234/plist/46269d71-9fda-76fc-3442-a118d6b08bf1",
+		changelog: "add feature"
 	},
 	{
 		id: 3,
@@ -105,7 +107,8 @@ response:
 		name: "Victor",
 		uploadTime: "2016-11-26 20:47:43",
 		platform: "ios",
-		url: "itms-services://?action=download-manifest&url=https://10.20.30.233:1234/plist/baac66f0-0e7b-f72c-40e3-378aab26fd9b"
+		url: "itms-services://?action=download-manifest&url=https://10.20.30.233:1234/plist/baac66f0-0e7b-f72c-40e3-378aab26fd9b",
+		changelog: "bug fix"
 	}
 ]
 ```
@@ -136,7 +139,8 @@ response:
 		name: "Hugo",
 		uploadTime: "2016-11-26 21:00:51",
 		platform: "ios",
-		url: "itms-services://?action=download-manifest&url=https://10.20.30.233:1234/plist/a8573b7a-18bc-1925-f2b4-8842db2153aa"
+		url: "itms-services://?action=download-manifest&url=https://10.20.30.233:1234/plist/a8573b7a-18bc-1925-f2b4-8842db2153aa",
+		changelog: "add feature"
 	},
 	{
 		id: 6,
@@ -148,12 +152,12 @@ response:
 		name: "Hugo",
 		uploadTime: "2016-12-01 20:50:05",
 		platform: "ios",
-		url: "itms-services://?action=download-manifest&url=https://10.20.30.233:1234/plist/46269d71-9fda-76fc-3442-a118d6b08bf1"
+		url: "itms-services://?action=download-manifest&url=https://10.20.30.233:1234/plist/46269d71-9fda-76fc-3442-a118d6b08bf1",
+		changelog: "add feature"
 	}
 ]
 ```
 
 # TODO
-- 加入ChangeLog
 - web页面
 - token验证

@@ -81,7 +81,8 @@ excuteDB("CREATE TABLE IF NOT EXISTS info (\
   build TEXT,\
   name TEXT,\
   uploadTime datetime default (datetime('now', 'localtime')),\
-  platform TEXT\
+  platform TEXT,\
+  changelog TEXT\
   )");
 /**
  * Main program.
@@ -192,10 +193,14 @@ function main() {
   app.post('/upload', function(req, res) {
     var form = new multiparty.Form();
     form.parse(req, function(err, fields, files) {
+      var changelog;
+      if (fields.changelog) {
+        changelog = fields.changelog[0];
+      }
       var obj = files.package[0];
       var tmp_path = obj.path;
-      parseAppAndInsertToDb(tmp_path, info => {
-        storeApp(tmp_path, info["guid"],error => {
+      parseAppAndInsertToDb(tmp_path, changelog, info => {
+        storeApp(tmp_path, info["guid"], error => {
           if (error) {
             errorHandler(error,res)
           }
@@ -229,7 +234,7 @@ function mapIconAndUrl(result) {
   return items;
 }
 
-function parseAppAndInsertToDb(filePath, callback, errorCallback) {
+function parseAppAndInsertToDb(filePath, changelog, callback, errorCallback) {
   var guid = Guid.create().toString();
   var parse, extract
   if (path.extname(filePath) === ".ipa") {
@@ -242,8 +247,9 @@ function parseAppAndInsertToDb(filePath, callback, errorCallback) {
   Promise.all([parse(filePath),extract(filePath,guid)]).then(values => {
     var info = values[0]
     info["guid"] = guid
-    excuteDB("INSERT INTO info (guid, platform, build, bundleID, version, name) VALUES (?, ?, ?, ?, ?, ?);",
-    [info["guid"], info["platform"], info["build"], info["bundleID"], info["version"], info["name"]],function(error){
+    info["changelog"] = changelog
+    excuteDB("INSERT INTO info (guid, platform, build, bundleID, version, name, changelog) VALUES (?, ?, ?, ?, ?, ?, ?);",
+    [info["guid"], info["platform"], info["build"], info["bundleID"], info["version"], info["name"], changelog],function(error){
         if (!error){
           callback(info)
         } else {
@@ -263,22 +269,6 @@ function storeApp(fileName, guid, callback) {
     new_path = path.join(apksDir, guid + ".apk");
   }
   fs.rename(fileName,new_path,callback)
-}
-
-function appInfoWithName(filename) {
-  return new Promise(function(resolve, reject){
-    var stat = fs.statSync(filename);
-    var time = new Date(stat.mtime);
-    var timeString = strftime('%F %H:%M', time);
-    var url;
-    var name = path.basename(filename, path.extname(filename));
-    resolve({
-      name: name,
-      description: '更新: ' + timeString,
-      time: time,
-      url: url,
-    })
-  });
 }
 
 function parseIpa(filename) {
