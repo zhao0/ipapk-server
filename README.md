@@ -165,6 +165,9 @@ response:
 	}
 ]
 ```
+# SSL 证书
+该项目默认使用自签名的证书，如果你有正规CA颁发的证书，可替换`~/.ipapk-server`目录下的证书。
+
 
 # TODO
 - token验证
