@@ -1,5 +1,5 @@
-## web 页面未完成
-自动生成自签名HTTPS服务器，快速安装ipa、apk，基于[ios-ipa-server](https://github.com/bumaociyuan/ios-ipa-server)开发
+# 简介
+自动生成自签名HTTPS服务器，可以快速安装ipa、apk，基于[ios-ipa-server](https://github.com/bumaociyuan/ios-ipa-server)开发
 
 # 支持
 * OS X
@@ -35,9 +35,17 @@ Options:
 ```
 $ ipapk-server
 
-# open https://ip:port/download on your iphone
-# 推荐使用pm2等进程管理运行服务
+# 推荐使用pm2/forever等进程管理运行服务
 ```
+
+## 下载
+手机浏览器中打开 `https://ip:port/`
+> - 记得输https  
+> - iOS下载一定要使用Safari
+
+![](ss1.jpeg)
+![](ss2.jpeg)
+该项目提供了默认的web下载页面，同时也提供了API，方便集成到其他平台。
 
 ## API
 ### 包上传
@@ -159,5 +167,5 @@ response:
 ```
 
 # TODO
-- web页面
 - token验证
+- 国际化支持

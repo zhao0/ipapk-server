@@ -6,7 +6,7 @@ var path = require('path');
 var exit = process.exit;
 var pkg = require('./package.json');
 var version = pkg.version;
-var AdmZip = require("adm-zip")
+var AdmZip = require("adm-zip");
 var program = require('commander');
 var express = require('express');
 var mustache = require('mustache');
@@ -15,9 +15,9 @@ var underscore = require('underscore');
 var os = require('os');
 var multiparty = require('multiparty');
 var sqlite3 = require('sqlite3');  
-var Guid = require("guid")
+var Guid = require("guid");
 var extract = require('ipa-extract-info');
-var apkParser3 = require("apk-parser3")
+var apkParser3 = require("apk-parser3");
 require('shelljs/global');
 
 /** 格式化输入字符串**/
@@ -40,12 +40,12 @@ var ipAddress = underscore
   })
   .value()
   .address;
-var pageCount = 15;
-var globalCerFolder = os.homedir() + '/.ipapk-server/' + ipAddress;
-var serverDir = os.homedir() + "/ipapk-server"
-var ipasDir = serverDir + "/ipa";
-var apksDir = serverDir + "/apk";
-var iconsDir = serverDir + "/icon";
+var pageCount = 5;
+var serverDir = os.homedir() + "/.ipapk-server/"
+var globalCerFolder = serverDir + ipAddress;
+var ipasDir = serverDir + "ipa";
+var apksDir = serverDir + "apk";
+var iconsDir = serverDir + "icon";
 createFolderIfNeeded(serverDir)
 createFolderIfNeeded(ipasDir)
 createFolderIfNeeded(apksDir)
@@ -62,13 +62,13 @@ function createFolderIfNeeded (path) {
 }
 
 function excuteDB(cmd, params, callback) {
-  var db = new sqlite3.Database(serverDir + '/db.sqlite3');
+  var db = new sqlite3.Database(serverDir + 'db.sqlite3');
   db.run(cmd, params, callback);
   db.close();
 }
 
 function queryDB(cmd, params, callback) {
-  var db = new sqlite3.Database(serverDir + '/db.sqlite3');
+  var db = new sqlite3.Database(serverDir + 'db.sqlite3');
   db.all(cmd, params, callback);
   db.close();
 }
@@ -143,15 +143,16 @@ function main() {
 
   var app = express();
   app.use('/cer', express.static(globalCerFolder));
+  app.use('/', express.static(path.join(__dirname,'web')));
   app.use('/ipa', express.static(ipasDir));
   app.use('/apk', express.static(apksDir));
   app.use('/icon', express.static(iconsDir));
-  app.get(['/apps/:platform'], function(req, res, next) {
+  app.get(['/apps/:platform', '/apps/:platform/:page'], function(req, res, next) {
   	  res.set('Access-Control-Allow-Origin','*');
       res.set('Content-Type', 'application/json');
       var page = parseInt(req.params.page ? req.params.page : 1);
       if (req.params.platform === 'android' || req.params.platform === 'ios') {
-        queryDB("select * from info where platform=? group by bundleID limit ?,?", [req.params.platform, (page - 1) * pageCount, page * pageCount], function(error, result) {
+        queryDB("select * from info where platform=? group by bundleID order by uploadTime desc limit ?,?", [req.params.platform, (page - 1) * pageCount, page * pageCount], function(error, result) {
           if (result) {
             res.send(mapIconAndUrl(result))
           } else {
@@ -166,7 +167,7 @@ function main() {
       res.set('Content-Type', 'application/json');
       var page = parseInt(req.params.page ? req.params.page : 1);
       if (req.params.platform === 'android' || req.params.platform === 'ios') {
-        queryDB("select * from info where platform=? and bundleID=? limit ?,? ", [req.params.platform, req.params.bundleID, (page - 1) * pageCount, page * pageCount], function(error, result) {
+        queryDB("select * from info where platform=? and bundleID=? order by uploadTime desc limit ?,? ", [req.params.platform, req.params.bundleID, (page - 1) * pageCount, page * pageCount], function(error, result) {
           if (result) {
             res.send(mapIconAndUrl(result))
           } else {
@@ -176,12 +177,13 @@ function main() {
       }
   });
 
-  app.get('/plist/:file', function(req, res) {
-    fs.readFile(path.join(__dirname, '..', 'templates') + '/template.plist', function(err, data) {
+  app.get('/plist/:file/:name', function(req, res) {
+    fs.readFile(path.join(__dirname, 'templates') + '/template.plist', function(err, data) {
       if (err) throw err;
       var template = data.toString();
       var rendered = mustache.render(template, {
-        name: req.params.file,
+        guiid: req.params.file,
+        name: req.params.name,
         basePath: basePath,
       });
       res.set('Content-Type', 'text/plain; charset=utf-8');
@@ -225,7 +227,7 @@ function mapIconAndUrl(result) {
   var items = result.map(function(item) {
     item.icon = "{0}/icon/{1}.png".format(basePath, item.guid);
     if (item.platform === 'ios') {
-      item.url = "itms-services://?action=download-manifest&url={0}/plist/{1}".format(basePath, item.guid);
+      item.url = "itms-services://?action=download-manifest&url={0}/plist/{1}/{2}".format(basePath, item.guid, item.name);
     } else if (item.platform === 'android') {
       item.url = "{0}/apk/{1}.apk".format(basePath, item.guid);
     }
