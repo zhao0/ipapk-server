@@ -73,8 +73,7 @@ response:
   guid: '46269d71-9fda-76fc-3442-a118d6b08bf1' 
 }
 ```
-命令行:`curl 'https://ip:port/upload' -F "package=@文件
-路径" -F "changelog=xxx" --insecure`，不能去掉`@`
+命令行:`curl 'https://ip:port/upload' -F "package=@文件路径" -F "changelog=xxx" --insecure`，不能去掉`@`
 
 ### 所有App
 path:
