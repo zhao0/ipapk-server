@@ -74,7 +74,7 @@ response:
 }
 ```
 命令行:`curl 'https://ip:port/upload' -F "package=@文件
-路径" --insecure`，不能去掉`@`
+路径" -F "changelog=xxx" --insecure`，不能去掉`@`
 
 ### 所有App
 path:
