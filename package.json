@@ -9,14 +9,14 @@
     "dbushell-grunt-mustatic": "^0.1.1",
     "express": "^4.13.1",
     "fs-extra": "^0.30.0",
-    "guid": "0.0.12",
     "ipa-extract-info": "^1.2.2",
     "multiparty": "^4.1.2",
     "mustache": "^2.1.2",
     "shelljs": "^0.7.0",
     "sqlite3": "^3.1.8",
     "strftime": "^0.9.2",
-    "underscore": "^1.8.3"
+    "underscore": "^1.8.3",
+    "uuid": "^3.0.1"
   },
   "bin": {
     "ipapk-server": "ipapk-server.js"

@@ -15,7 +15,7 @@ var underscore = require('underscore');
 var os = require('os');
 var multiparty = require('multiparty');
 var sqlite3 = require('sqlite3');  
-var Guid = require("guid");
+var uuidV4 = require('uuid/v4');
 var extract = require('ipa-extract-info');
 var apkParser3 = require("apk-parser3");
 require('shelljs/global');
@@ -177,18 +177,24 @@ function main() {
       }
   });
 
-  app.get('/plist/:file/:name', function(req, res) {
-    fs.readFile(path.join(__dirname, 'templates') + '/template.plist', function(err, data) {
-      if (err) throw err;
-      var template = data.toString();
-      var rendered = mustache.render(template, {
-        guiid: req.params.file,
-        name: req.params.name,
-        basePath: basePath,
-      });
-      res.set('Content-Type', 'text/plain; charset=utf-8');
-  	  res.set('Access-Control-Allow-Origin','*');
-      res.send(rendered);
+  app.get('/plist/:guid', function(req, res) {
+    queryDB("select name from info where guid=?", [req.params.guid], function(error, result) {
+      if (result) {
+        fs.readFile(path.join(__dirname, 'templates') + '/template.plist', function(err, data) {
+            if (err) throw err;
+            var template = data.toString();
+            var rendered = mustache.render(template, {
+              guid: req.params.guid,
+              name: result[0].name,
+              basePath: basePath,
+            });
+            res.set('Content-Type', 'text/plain; charset=utf-8');
+            res.set('Access-Control-Allow-Origin','*');
+            res.send(rendered);
+        })
+      } else {
+        errorHandler(error, res)
+      }
     })
   });
 
@@ -227,7 +233,7 @@ function mapIconAndUrl(result) {
   var items = result.map(function(item) {
     item.icon = "{0}/icon/{1}.png".format(basePath, item.guid);
     if (item.platform === 'ios') {
-      item.url = "itms-services://?action=download-manifest&url={0}/plist/{1}/{2}".format(basePath, item.guid, item.name);
+      item.url = "itms-services://?action=download-manifest&url={0}/plist/{1}".format(basePath, item.guid);
     } else if (item.platform === 'android') {
       item.url = "{0}/apk/{1}.apk".format(basePath, item.guid);
     }
@@ -237,7 +243,7 @@ function mapIconAndUrl(result) {
 }
 
 function parseAppAndInsertToDb(filePath, changelog, callback, errorCallback) {
-  var guid = Guid.create().toString();
+  var guid = uuidV4();
   var parse, extract
   if (path.extname(filePath) === ".ipa") {
     parse = parseIpa
