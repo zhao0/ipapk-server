@@ -178,7 +178,7 @@ function main() {
   });
 
   app.get('/plist/:guid', function(req, res) {
-    queryDB("select name from info where guid=?", [req.params.guid], function(error, result) {
+    queryDB("select name,bundleID from info where guid=?", [req.params.guid], function(error, result) {
       if (result) {
         fs.readFile(path.join(__dirname, 'templates') + '/template.plist', function(err, data) {
             if (err) throw err;
@@ -186,6 +186,7 @@ function main() {
             var rendered = mustache.render(template, {
               guid: req.params.guid,
               name: result[0].name,
+              bundleID: result[0].bundleID,
               basePath: basePath,
             });
             res.set('Content-Type', 'text/plain; charset=utf-8');
