@@ -206,6 +206,10 @@ function main() {
       if (fields.changelog) {
         changelog = fields.changelog[0];
       }
+      if (!files.package) {
+        errorHandler("params error",res)
+        return
+      }
       var obj = files.package[0];
       var tmp_path = obj.path;
       parseAppAndInsertToDb(tmp_path, changelog, info => {
@@ -252,6 +256,9 @@ function parseAppAndInsertToDb(filePath, changelog, callback, errorCallback) {
   } else if (path.extname(filePath) === ".apk") {
     parse = parseApk
     extract = extractApkIcon
+  } else {
+    errorCallback("params error")
+    return;
   }
   Promise.all([parse(filePath),extract(filePath,guid)]).then(values => {
     var info = values[0]
@@ -364,8 +371,11 @@ function extractIpaIcon(filename,guid) {
       exeName = 'pngdefry-linux';
     }
     try {
-      ipaEntries.forEach(function(ipaEntry) {
-        if (ipaEntry.entryName.indexOf('AppIcon60x60@3x.png') != -1) {
+      var found = false;
+      for (var i = 0; i < ipaEntries.length; i++) {
+        var ipaEntry = ipaEntries[i];
+        if (ipaEntry.entryName.indexOf('AppIcon60x60@2x.png') != -1) {
+          found = true;
           var buffer = new Buffer(ipaEntry.getData());
           if (buffer.length) {
             fs.writeFile(tmpOut, buffer,function(err){  
@@ -388,10 +398,12 @@ function extractIpaIcon(filename,guid) {
             })
           }
         }
-      });
+      }
+      if (!found) {
+        reject("can not find icon ")
+      }
     } catch (e) {
       reject(e)
     }
   })
 }
-
