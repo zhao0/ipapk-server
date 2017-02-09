@@ -335,7 +335,18 @@ function parseText(text) {
 function extractApkIcon(filename,guid) {
   return new Promise(function(resolve,reject){
     apkParser3(filename, function (err, data) {
-      var iconPath = data["application-icon-640"]
+      var iconPath = false;
+      [640,320,240,160].every(i=>{
+        if(typeof data["application-icon-"+i] !== 'undefined'){
+          iconPath=data["application-icon-"+i];
+          return false;
+        }
+        return true;
+      });
+      if(!iconPath){
+        reject("can not find icon ");
+      }
+
       iconPath = iconPath.replace(/'/g,"")
       var tmpOut = iconsDir + "/{0}.png".format(guid)
       var zip = new AdmZip(filename); 
