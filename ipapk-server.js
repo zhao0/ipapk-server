@@ -31,7 +31,20 @@ String.prototype.format= function(){
   });
 }
 
-var ipAddress = underscore
+before(program, 'outputHelp', function() {
+  this.allowUnknownOption();
+});
+
+program
+    .version(version)
+    .usage('[option] [dir]')
+    .option('-p, --port <port-number>', 'set port for server (defaults is 1234)')
+    .option('-h, --host <host>', 'set host for server (defaults is your LAN ip)')
+    .parse(process.argv);
+
+var port = program.port || 1234;
+
+var ipAddress = program.host || underscore
   .chain(require('os').networkInterfaces())
   .values()
   .flatten()
@@ -40,6 +53,7 @@ var ipAddress = underscore
   })
   .value()
   .address;
+
 var pageCount = 5;
 var serverDir = os.homedir() + "/.ipapk-server/"
 var globalCerFolder = serverDir + ipAddress;
@@ -90,18 +104,6 @@ excuteDB("CREATE TABLE IF NOT EXISTS info (\
 process.exit = exit
 
 // CLI
-
-before(program, 'outputHelp', function() {
-  this.allowUnknownOption();
-});
-
-program
-  .version(version)
-  .usage('[option] [dir]')
-  .option('-p, --port <port-number>', 'set port for server (defaults is 1234)')
-  .parse(process.argv);
-
-var port = program.port || 1234;
 var basePath = "https://{0}:{1}".format(ipAddress, port);
 if (!exit.exited) {
   main();
