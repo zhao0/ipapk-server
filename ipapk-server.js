@@ -219,9 +219,10 @@ function main() {
           if (error) {
             errorHandler(error,res)
           }
+          console.log(info)
+          res.send(info)
         })
-        console.log(info)
-        res.send(info)
+
       }, error => {
         errorHandler(error,res)
       });
