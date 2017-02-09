@@ -31,7 +31,20 @@ String.prototype.format= function(){
   });
 }
 
-var ipAddress = underscore
+before(program, 'outputHelp', function() {
+  this.allowUnknownOption();
+});
+
+program
+    .version(version)
+    .usage('[option] [dir]')
+    .option('-p, --port <port-number>', 'set port for server (defaults is 1234)')
+    .option('-h, --host <host>', 'set host for server (defaults is your LAN ip)')
+    .parse(process.argv);
+
+var port = program.port || 1234;
+
+var ipAddress = program.host || underscore
   .chain(require('os').networkInterfaces())
   .values()
   .flatten()
@@ -40,6 +53,7 @@ var ipAddress = underscore
   })
   .value()
   .address;
+
 var pageCount = 5;
 var serverDir = os.homedir() + "/.ipapk-server/"
 var globalCerFolder = serverDir + ipAddress;
@@ -90,18 +104,6 @@ excuteDB("CREATE TABLE IF NOT EXISTS info (\
 process.exit = exit
 
 // CLI
-
-before(program, 'outputHelp', function() {
-  this.allowUnknownOption();
-});
-
-program
-  .version(version)
-  .usage('[option] [dir]')
-  .option('-p, --port <port-number>', 'set port for server (defaults is 1234)')
-  .parse(process.argv);
-
-var port = program.port || 1234;
 var basePath = "https://{0}:{1}".format(ipAddress, port);
 if (!exit.exited) {
   main();
@@ -217,9 +219,10 @@ function main() {
           if (error) {
             errorHandler(error,res)
           }
+          console.log(info)
+          res.send(info)
         })
-        console.log(info)
-        res.send(info)
+
       }, error => {
         errorHandler(error,res)
       });
@@ -332,7 +335,18 @@ function parseText(text) {
 function extractApkIcon(filename,guid) {
   return new Promise(function(resolve,reject){
     apkParser3(filename, function (err, data) {
-      var iconPath = data["application-icon-640"]
+      var iconPath = false;
+      [640,320,240,160].every(i=>{
+        if(typeof data["application-icon-"+i] !== 'undefined'){
+          iconPath=data["application-icon-"+i];
+          return false;
+        }
+        return true;
+      });
+      if(!iconPath){
+        reject("can not find icon ");
+      }
+
       iconPath = iconPath.replace(/'/g,"")
       var tmpOut = iconsDir + "/{0}.png".format(guid)
       var zip = new AdmZip(filename); 
