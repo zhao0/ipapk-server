@@ -4,6 +4,7 @@
 # 支持
 * OS X
 * Ubuntu
+* CentOS
 * 其他平台未测试
 
 # 需要
@@ -18,6 +19,12 @@ Ubuntu 64 bit 需要另外安装
 ```
 sudo apt-get install libc6-i386 lib32stdc++6 lib32gcc1 lib32ncurses5
 sudo apt-get install lib32z1
+```
+
+CentOS 64 bit 需要另外安装
+
+```
+ yum install zlib.i686 libstdc++.i686
 ```
 
 # 用法
@@ -43,6 +50,9 @@ $ ipapk-server
 手机浏览器中打开 `https://ip:port/`
 > - 记得输https  
 > - iOS下载一定要使用Safari
+### 注意
+iOS 10.3后 默认不信任安装的证书，需要手动信任。
+> 设置 > 通用 > 关于 > 证书信任设置 > 对需要的证书启用完全信任
 
 ![](ss1.jpeg)
 ![](ss2.jpeg)
@@ -52,11 +62,11 @@ $ ipapk-server
 ### 包上传
 path:
 
-``` 
+```
 POST /upload
 ```
 
-param: 
+param:
 
 ```
 package:安装包文件, reqiured
@@ -71,7 +81,7 @@ response:
   bundleID: 'com.jianshu.Hugo',
   version: '2.11.4',
   name: 'Hugo',
-  guid: '46269d71-9fda-76fc-3442-a118d6b08bf1' 
+  guid: '46269d71-9fda-76fc-3442-a118d6b08bf1'
 }
 ```
 命令行:`curl 'https://ip:port/upload' -F "package=@文件路径" -F "changelog=xxx" --insecure`，不能去掉`@`
