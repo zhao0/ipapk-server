@@ -23,7 +23,7 @@ sudo apt-get install lib32z1
 CentOS 64 bit need to be installed separately
 
 ```
- yum install zlib.i686 libstdc++.i686
+ yum install zlib libstdc++
 ```
 
 # Usage
@@ -176,7 +176,8 @@ response:
 ]
 ```
 # SSL certificate
-The project defaults to a self-signed certificate, and if you have a certificate issued by a regular CA, you can replace ~/.ipapk-serverthe certificate under the directory.
+~~The project defaults to a self-signed certificate, and if you have a certificate issued by a regular CA, you can replace ~/.ipapk-server. The certificate under the directory.~~
+The project will serve on `http`. You should use an reverse-proxy server such as Nginx with ssl.
 
 
 # TODO
