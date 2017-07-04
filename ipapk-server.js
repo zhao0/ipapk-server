@@ -40,6 +40,7 @@ program
     .usage('[option] [dir]')
     .option('-p, --port <port-number>', 'set port for server (defaults is 1234)')
     .option('-h, --host <host>', 'set host for server (defaults is your LAN ip)')
+    //.option('-p, --provider <provider-name>', 'set name of the provider')
     .parse(process.argv);
 
 var port = program.port || 1234;
