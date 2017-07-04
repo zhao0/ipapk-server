@@ -210,7 +210,7 @@ function main() {
     });
   });
 
-  http.createServer(options, app).listen(port);
+  http.createServer(app).listen(port);
 }
 
 function errorHandler(error, res) {
