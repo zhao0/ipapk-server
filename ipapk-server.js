@@ -204,6 +204,10 @@ function main() {
   app.post('/upload', function(req, res) {
     var form = new multiparty.Form();
     form.parse(req, function(err, fields, files) {
+      if (err) {
+        errorHandler(err, res);
+        return;
+      }
       var changelog;
       if (fields.changelog) {
         changelog = fields.changelog[0];
