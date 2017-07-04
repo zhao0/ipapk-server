@@ -176,7 +176,6 @@ response:
 ]
 ```
 # SSL certificate
-~~The project defaults to a self-signed certificate, and if you have a certificate issued by a regular CA, you can replace ~/.ipapk-server. The certificate under the directory.~~
 The project will serve on `http`. You should use an reverse-proxy server such as Nginx with ssl.
 
 
