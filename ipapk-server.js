@@ -39,13 +39,14 @@ program
     .version(version)
     .usage('[option] [dir]')
     .option('-p, --port <port-number>', 'set port for server (defaults is 1234)')
-    .option('-h, --host <host>', 'set host for server (defaults is your LAN ip)')
+    .option('-b, --bind <host>', 'set bind for server (defaults is your LAN ip)')
+    .option('-h, --host <host>', 'set hostname for server')
     //.option('-p, --provider <provider-name>', 'set name of the provider')
     .parse(process.argv);
 
 var port = program.port || 1234;
 
-var ipAddress = program.host || underscore
+var ipAddress = program.bind || underscore
   .chain(require('os').networkInterfaces())
   .values()
   .flatten()
@@ -104,7 +105,7 @@ excuteDB("CREATE TABLE IF NOT EXISTS info (\
 process.exit = exit
 
 // CLI
-var basePath = "http://{0}:{1}".format(ipAddress, port);
+var basePath = "http://{0}:{1}".format(program.host, port);
 if (!exit.exited) {
   main();
 }

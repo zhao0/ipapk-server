@@ -13,17 +13,10 @@ Automatically generate self-signed HTTPS server, you can quickly install ipa, ap
 ```
 $ npm install -g ipapk-server
 ```
-Ubuntu 64 bit need to be installed separately
-
-```
-sudo apt-get install libc6-i386 lib32stdc++6 lib32gcc1 lib32ncurses5
-sudo apt-get install lib32z1
-```
-
 CentOS 64 bit need to be installed separately
 
 ```
- yum install zlib libstdc++
+ yum install ld-linux.so.2 libz.so.1 libstdc++.so.6
 ```
 
 # Usage
@@ -42,7 +35,6 @@ Options:
 ```
 $ ipapk-server
 
-# 推荐使用pm2/forever等进程管理运行服务
 ```
 
 ## Open
