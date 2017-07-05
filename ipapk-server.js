@@ -105,7 +105,7 @@ excuteDB("CREATE TABLE IF NOT EXISTS info (\
 process.exit = exit
 
 // CLI
-var basePath = "http://{0}:{1}".format(program.host, port);
+var basePath = "https://{0}".format(program.host);
 if (!exit.exited) {
   main();
 }
