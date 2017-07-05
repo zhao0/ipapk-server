@@ -4,12 +4,12 @@ var appsPage = 0;
 function switchPlatform(platform) {
 	if (currentPlatform != platform) {
 		currentPlatform = platform
-		appsPage = 0;
-		$('.platform_wrapper').children('li').remove();
-		loadApps();
 		var newSection = $("#" + "section_" + currentPlatform);
 		$(newSection).siblings().removeClass('selected_title');
 		$(newSection).addClass('selected_title');
+		appsPage = 0;
+		$('.platform_wrapper').children('li').remove();
+		loadApps();
 	}
 }
 
@@ -92,11 +92,11 @@ function loadMoreVersion(el) {
 }
 
 $(function(){
-	$('.platform_title').on('click',function(){
-		$(this).siblings().removeClass('selected_title');
-		$(this).addClass('selected_title');
-		switchPlatform($(this).text().toLowerCase());
-	});
+	// $('.platform_title').on('click',function(){
+	// 	$(this).siblings().removeClass('selected_title');
+	// 	$(this).addClass('selected_title');
+	// 	switchPlatform($(this).text().toLowerCase());
+	// });
 	//点击展开二维码
 	$('.qrcode_btn').on('click',function(){
 		$('.qrcode_box').toggleClass('qrcode_box_show');
@@ -133,9 +133,9 @@ $(function(){
 	// 二维码
 	$('.qrcode_pic').attr('src',"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data="+location.href);
 	if(location.href.indexOf("/l/android") >= 0){
-		switchPlatform('ios');
+		switchPlatform('android');
 	}
 	else{
-		switchPlatform('android');
+		switchPlatform('ios');
 	}
 });
