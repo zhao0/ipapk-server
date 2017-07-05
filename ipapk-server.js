@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var fs = require('fs-extra');
-var https = require('https');
+var http = require('http');
 var path = require('path');
 var exit = process.exit;
 var pkg = require('./package.json');
@@ -14,7 +14,7 @@ var strftime = require('strftime');
 var underscore = require('underscore');
 var os = require('os');
 var multiparty = require('multiparty');
-var sqlite3 = require('sqlite3');  
+var sqlite3 = require('sqlite3');
 var uuidV4 = require('uuid/v4');
 var extract = require('ipa-extract-info');
 var apkParser3 = require("apk-parser3");
@@ -39,12 +39,14 @@ program
     .version(version)
     .usage('[option] [dir]')
     .option('-p, --port <port-number>', 'set port for server (defaults is 1234)')
-    .option('-h, --host <host>', 'set host for server (defaults is your LAN ip)')
+    .option('-b, --bind <host>', 'set bind for server (defaults is your LAN ip)')
+    .option('-h, --host <host>', 'set hostname for server')
+    //.option('-p, --provider <provider-name>', 'set name of the provider')
     .parse(process.argv);
 
 var port = program.port || 1234;
 
-var ipAddress = program.host || underscore
+var ipAddress = program.bind || underscore
   .chain(require('os').networkInterfaces())
   .values()
   .flatten()
@@ -56,7 +58,6 @@ var ipAddress = program.host || underscore
 
 var pageCount = 5;
 var serverDir = os.homedir() + "/.ipapk-server/"
-var globalCerFolder = serverDir + ipAddress;
 var ipasDir = serverDir + "ipa";
 var apksDir = serverDir + "apk";
 var iconsDir = serverDir + "icon";
@@ -65,7 +66,7 @@ createFolderIfNeeded(ipasDir)
 createFolderIfNeeded(apksDir)
 createFolderIfNeeded(iconsDir)
 function createFolderIfNeeded (path) {
-  if (!fs.existsSync(path)) {  
+  if (!fs.existsSync(path)) {
     fs.mkdirSync(path, function (err) {
         if (err) {
             console.log(err);
@@ -104,7 +105,7 @@ excuteDB("CREATE TABLE IF NOT EXISTS info (\
 process.exit = exit
 
 // CLI
-var basePath = "https://{0}:{1}".format(ipAddress, port);
+var basePath = "https://{0}".format(program.host);
 if (!exit.exited) {
   main();
 }
@@ -126,29 +127,15 @@ function main() {
 
   console.log(basePath);
 
-  var key;
-  var cert;
-
-  try {
-    key = fs.readFileSync(globalCerFolder + '/mycert1.key', 'utf8');
-    cert = fs.readFileSync(globalCerFolder + '/mycert1.cer', 'utf8');
-  } catch (e) {
-    var result = exec('sh  ' + path.join(__dirname, 'bin', 'generate-certificate.sh') + ' ' + ipAddress).output;
-    key = fs.readFileSync(globalCerFolder + '/mycert1.key', 'utf8');
-    cert = fs.readFileSync(globalCerFolder + '/mycert1.cer', 'utf8');
-  }
-
-  var options = {
-    key: key,
-    cert: cert
-  };
-
   var app = express();
-  app.use('/cer', express.static(globalCerFolder));
   app.use('/', express.static(path.join(__dirname,'web')));
   app.use('/ipa', express.static(ipasDir));
   app.use('/apk', express.static(apksDir));
   app.use('/icon', express.static(iconsDir));
+
+app.get('/l/:platform', function(req, res) {
+  res.sendFile(__dirname + '/web/index.html');
+});
   app.get(['/apps/:platform', '/apps/:platform/:page'], function(req, res, next) {
   	  res.set('Access-Control-Allow-Origin','*');
       res.set('Content-Type', 'application/json');
@@ -229,7 +216,7 @@ function main() {
     });
   });
 
-  https.createServer(options, app).listen(port);
+  http.createServer(app).listen(port);
 }
 
 function errorHandler(error, res) {
@@ -349,7 +336,7 @@ function extractApkIcon(filename,guid) {
 
       iconPath = iconPath.replace(/'/g,"")
       var tmpOut = iconsDir + "/{0}.png".format(guid)
-      var zip = new AdmZip(filename); 
+      var zip = new AdmZip(filename);
       var ipaEntries = zip.getEntries();
       var found = false
       ipaEntries.forEach(function(ipaEntry) {
@@ -357,8 +344,8 @@ function extractApkIcon(filename,guid) {
           var buffer = new Buffer(ipaEntry.getData());
           if (buffer.length) {
             found = true
-            fs.writeFile(tmpOut, buffer,function(err){  
-              if(err){  
+            fs.writeFile(tmpOut, buffer,function(err){
+              if(err){
                   reject(err)
               }
               resolve({"success":true})
@@ -376,7 +363,7 @@ function extractApkIcon(filename,guid) {
 function extractIpaIcon(filename,guid) {
   return new Promise(function(resolve,reject){
     var tmpOut = iconsDir + "/{0}.png".format(guid)
-    var zip = new AdmZip(filename); 
+    var zip = new AdmZip(filename);
     var ipaEntries = zip.getEntries();
     var exeName = '';
     if (process.platform == 'darwin') {
@@ -390,15 +377,15 @@ function extractIpaIcon(filename,guid) {
         found = true;
         var buffer = new Buffer(ipaEntry.getData());
         if (buffer.length) {
-          fs.writeFile(tmpOut, buffer,function(err){  
-            if(err){  
+          fs.writeFile(tmpOut, buffer,function(err){
+            if(err){
               reject(err)
             } else {
               var execResult = exec(path.join(__dirname, 'bin', exeName + ' -s _tmp ') + ' ' + tmpOut)
               if (execResult.stdout.indexOf('not an -iphone crushed PNG file') != -1) {
                 resolve({"success":true})
               } else {
-                fs.remove(tmpOut,function(err){  
+                fs.remove(tmpOut,function(err){
                   if(err){
                     reject(err)
                   } else {

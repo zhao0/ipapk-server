@@ -1,7 +1,7 @@
 {
   "name": "ipapk-server",
-  "version": "0.2.6",
-  "description": "Create a HTTPS Server to install ipa and apk locally",
+  "version": "0.3.0-HALFZ",
+  "description": "Create a HTTP Server to install ipa and apk locally",
   "dependencies": {
     "adm-zip": "^0.4.7",
     "apk-parser3": "^0.1.6",
@@ -27,12 +27,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/zhao0/ipapk-server.git"
+    "url": "https://github.com/Halfz/ipapk-server.git"
   },
   "author": "zhao0",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/zhao0/ipapk-server/issues"
+    "url": "https://github.com/Halfz/ipapk-server/issues"
   },
-  "homepage": "https://github.com/zhao0/ipapk-server"
+  "homepage": "https://github.com/Halfz/ipapk-server"
 }

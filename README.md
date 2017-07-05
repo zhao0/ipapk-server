@@ -1,65 +1,58 @@
-# 简介
-自动生成自签名HTTPS服务器，可以快速安装ipa、apk，基于[ios-ipa-server](https://github.com/bumaociyuan/ios-ipa-server)开发
+# Introduction
+Automatically generate self-signed HTTPS server, you can quickly install ipa, apk, based on [ios-ipa-server](https://github.com/bumaociyuan/ios-ipa-server).
 
-# 支持
+# Supported Platform
 * OS X
 * Ubuntu
 * CentOS
-* 其他平台未测试
 
-# 需要
+# Needs
 * [nodejs](https://nodejs.org/)
 
-# 安装
+# Installation
 ```
 $ npm install -g ipapk-server
 ```
-Ubuntu 64 bit 需要另外安装
+CentOS 64 bit need to be installed separately
 
 ```
-sudo apt-get install libc6-i386 lib32stdc++6 lib32gcc1 lib32ncurses5
-sudo apt-get install lib32z1
+ yum install ld-linux.so.2 libz.so.1 libstdc++.so.6
 ```
 
-CentOS 64 bit 需要另外安装
-
-```
- yum install zlib.i686 libstdc++.i686
-```
-
-# 用法
+# Usage
 ```
 Usage: ipapk-server [option]
 
 Options:
 
--h, --help                output usage information
+--help                output usage information
 -V, --version             output the version number
 -p, --port <port-number>  set port for server (defaults is 1234)
--h, --host <host>     set host for server (defaults is your LAN ip)
+-b, --bind <bind>     set bind for server (defaults is your LAN ip)
+-h, --host <host-name>     set hostname for server (required)
 ```
 
-## 开启服务
+## Run
 ```
 $ ipapk-server
 
-# 推荐使用pm2/forever等进程管理运行服务
 ```
 
-## 下载
-手机浏览器中打开 `https://ip:port/`
-> - 记得输https  
-> - iOS下载一定要使用Safari
-### 注意
-iOS 10.3后 默认不信任安装的证书，需要手动信任。
-> 设置 > 通用 > 关于 > 证书信任设置 > 对需要的证书启用完全信任
+## Open
+Open in the phone browser `https://ip:port/`
+> - Remember `https`
+> - IOS download must use Safari
+### Note
+IOS 10.3 does not trust the installation of the default certificate, you need to manually trust.
+> Settings> General> About> Certificate Trust Settings> Enable full trust for required certificates
 
 ![](ss1.jpeg)
 ![](ss2.jpeg)
-该项目提供了默认的web下载页面，同时也提供了API，方便集成到其他平台。
+
+The project provides a default web download page, and also provides APIs for easy integration into other platforms.
 
 ## API
-### 包上传
+### Upload
 path:
 
 ```
@@ -69,7 +62,7 @@ POST /upload
 param:
 
 ```
-package:安装包文件, reqiured
+package:Package File, reqiured
 changelog:ChangeLog, optional
 ```
 response:
@@ -84,9 +77,9 @@ response:
   guid: '46269d71-9fda-76fc-3442-a118d6b08bf1'
 }
 ```
-命令行:`curl 'https://ip:port/upload' -F "package=@文件路径" -F "changelog=xxx" --insecure`，不能去掉`@`
+Curl:`curl 'https://ip:port/upload' -F "package=@<file-path>" -F "changelog=xxx" --insecure`，can not be removed`@`
 
-### 所有App
+### App List
 path:
 
 ```
@@ -96,7 +89,7 @@ params:
 
 ```
 :platform: ios or android
-:page: 分页，默认1
+:page: page number，default 1
 ```
 response:
 
@@ -130,7 +123,7 @@ response:
 	}
 ]
 ```
-### 某个App的所有版本
+### App List by the bundleID
 path:
 
 ```
@@ -141,7 +134,7 @@ params:
 ```
 :platform: ios or android
 :bundleID: app bundleID
-:page: 分页，默认1
+:page: page number，default 1
 ```
 response:
 
@@ -175,13 +168,13 @@ response:
 	}
 ]
 ```
-# SSL 证书
-该项目默认使用自签名的证书，如果你有正规CA颁发的证书，可替换`~/.ipapk-server`目录下的证书。
+# SSL certificate
+The project will serve on `http`. You should use an reverse-proxy server such as Nginx with ssl.
 
 
 # TODO
-- token验证
-- 国际化支持
+- Token verification
+- International support
 
-# 贡献
+# Contribution
 [zhao0](https://github.com/zhao0)、[mask2](https://github.com/mask2)
