@@ -7,6 +7,9 @@ function switchPlatform(platform) {
 		appsPage = 0;
 		$('.platform_wrapper').children('li').remove();
 		loadApps();
+		var newSection = $("#" + "section_" + currentPlatform);
+		$(newSection).siblings().removeClass('selected_title');
+		$(newSection).addClass('selected_title');
 	}
 }
 
@@ -28,12 +31,12 @@ function loadApps(){
 						'<img src="'+val.icon+'" alt="">'+
 						'<div class="info_box">'+
 							'<span class="app_name">'+val.name+
-							'</span><span class="version_number">'+val.version+'  '+val.build+'</span><br>'+
-							'<span>更新:</span>'+
+							'</span><span class="version_number">'+val.version+'  ('+val.build+')</span><br>'+
+							'<span>Uploaded:</span>'+
 							'<span class="update_time">'+val.uploadTime+'</span>'+
 							'<br><span class="changelog">'+(val.changelog ? val.changelog : "")+'</span>'+
 						'</div>'+
-						'<a class="down_btn" href="'+val.url+'">下载</a>'+
+						'<a class="down_btn" href="'+val.url+'">Down</a>'+
 					'</div>'+
 					'<ul class="all_version" bundleID="'+val.bundleID+'" nextPage="1"></ul>'+
 				'</li>';
@@ -129,5 +132,10 @@ $(function(){
 
 	// 二维码
 	$('.qrcode_pic').attr('src',"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data="+location.href);
-	switchPlatform('ios');
+	if(location.href.indexOf("/l/android") >= 0){
+		switchPlatform('ios');
+	}
+	else{
+		switchPlatform('android');
+	}
 });

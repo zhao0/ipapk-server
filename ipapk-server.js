@@ -132,6 +132,10 @@ function main() {
   app.use('/ipa', express.static(ipasDir));
   app.use('/apk', express.static(apksDir));
   app.use('/icon', express.static(iconsDir));
+
+app.get('/l/:platform', function(req, res) {
+  res.sendFile(__dirname + '/web/index.html');
+});
   app.get(['/apps/:platform', '/apps/:platform/:page'], function(req, res, next) {
   	  res.set('Access-Control-Allow-Origin','*');
       res.set('Content-Type', 'application/json');
