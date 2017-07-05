@@ -14,29 +14,7 @@
 	<meta name="format-detection" content="email=no" />
 	<!--winphone系统a、input标签被点击时产生的半透明灰色背景怎么去掉-->
 	<meta name="msapplication-tap-highlight" content="no">
-	<link rel="stylesheet" href="css/index.css">
-	<script src="js/zepto.min.js"></script>
-	<script src="js/touch.js"></script>
-	<script src="js/callbscks.js"></script>
-	<script src="js/deferred.js"></script>
-	<script src="js/index.js"></script>
-	<script>
-		function size() {
-			var Wwidth = $(window).width();
-			if (Wwidth > 640) {
-				Wwidth = 640
-			}
-			var bs = (Wwidth / 320) * 10;
-			var bspx = bs + "px";
-			$("html").css("font-size", bs);
-		}
-		$(function() {
-			size();
-		})
-		$(window).resize(function() {
-			size();
-		});
-	</script>
+	<link rel="stylesheet" href="/css/index.css">
 </head>
 
 <body>
@@ -56,6 +34,29 @@
 			</div>
 		</div>
 	</div>
+
+	<script src="/js/zepto.min.js"></script>
+	<script src="/js/touch.js"></script>
+	<script src="/js/callbscks.js"></script>
+	<script src="/js/deferred.js"></script>
+	<script src="/js/index.js"></script>
+	<script>
+		function size() {
+			var Wwidth = $(window).width();
+			if (Wwidth > 640) {
+				Wwidth = 640
+			}
+			var bs = (Wwidth / 320) * 10;
+			var bspx = bs + "px";
+			$("html").css("font-size", bs);
+		}
+		$(function() {
+			size();
+		})
+		$(window).resize(function() {
+			size();
+		});
+	</script>
 </body>
 
 </html>
