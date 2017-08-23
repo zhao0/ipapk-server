@@ -4,7 +4,7 @@
 # 支持
 * OS X
 * Ubuntu
-* CentOS
+* CentOS 7
 * 其他平台未测试
 
 # 需要
@@ -21,7 +21,7 @@ sudo apt-get install libc6-i386 lib32stdc++6 lib32gcc1 lib32ncurses5
 sudo apt-get install lib32z1
 ```
 
-CentOS 64 bit 需要另外安装
+CentOS 7 64 bit 需要另外安装
 
 ```
  yum install zlib.i686 libstdc++.i686
