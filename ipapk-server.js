@@ -18,6 +18,7 @@ var sqlite3 = require('sqlite3');
 var uuidV4 = require('uuid/v4');
 var extract = require('ipa-extract-info');
 var apkParser3 = require("apk-parser3");
+var PNGDDefry = require("node-pngdefry-cn");
 require('shelljs/global');
 
 /** 格式化输入字符串**/
@@ -378,12 +379,6 @@ function extractIpaIcon(filename,guid) {
     var tmpOut = iconsDir + "/{0}.png".format(guid)
     var zip = new AdmZip(filename); 
     var ipaEntries = zip.getEntries();
-    var exeName = '';
-    if (process.platform == 'darwin') {
-      exeName = 'pngdefry-osx';
-    } else {
-      exeName = 'pngdefry-linux';
-    }
     var found = false;
     ipaEntries.forEach(function(ipaEntry) {
       if (ipaEntry.entryName.indexOf('AppIcon60x60@2x.png') != -1) {
@@ -394,7 +389,7 @@ function extractIpaIcon(filename,guid) {
             if(err){  
               reject(err)
             } else {
-              var execResult = exec(path.join(__dirname, 'bin', exeName + ' -s _tmp ') + ' ' + tmpOut)
+              var execResult = exec(path.join(__dirname, 'bin','pngdefry -s _tmp ') + ' ' + tmpOut)
               if (execResult.stdout.indexOf('not an -iphone crushed PNG file') != -1) {
                 resolve({"success":true})
               } else {
