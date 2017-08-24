@@ -9,6 +9,7 @@
 
 # 需要
 * [nodejs](https://nodejs.org/)
+* gcc
 
 # 安装
 ```
