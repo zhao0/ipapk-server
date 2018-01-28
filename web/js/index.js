@@ -128,6 +128,13 @@ $(function(){
 	});
 	
 	// 二维码
-	$('.qrcode_pic').attr('src',"http://qr.topscan.com/api.php?m=5&text="+location.href);
+	new QRCode(document.getElementsByClassName('qrcode_pic')[0], {
+		text: location.href,
+		width: 160,
+		height: 160,
+		colorDark : "#000000",
+		colorLight : "#ffffff",
+		correctLevel : QRCode.CorrectLevel.H
+	});
 	switchPlatform('ios');
 });

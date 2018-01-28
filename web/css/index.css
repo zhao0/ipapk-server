@@ -46,7 +46,7 @@ a {
 
 .qrcode_box{ overflow:hidden; background:#eee; height:0; transition:all 0.4s; position:relative;}
 .qrcode_box_show{ height:10rem;}
-.qrcode_box .qrcode_pic{ position:absolute; width:8rem; left:1.4rem; top:1rem;}
+.qrcode_box .qrcode_pic img, .qrcode_box .qrcode_pic canvas{ position:absolute; width:8rem; left:1.4rem; top:1rem;}
 
 .qrcode_box .step{ margin-left:10.6rem; height:12rem; }
 .qrcode_box .step p{ padding-top:1rem; padding-right:1.4rem; text-align:left; font-size:1.2rem; color:#9B9B9B; line-height:1.4rem;}
