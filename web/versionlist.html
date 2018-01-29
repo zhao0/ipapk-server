@@ -14,7 +14,6 @@
     <!--winphone系统a、input标签被点击时产生的半透明灰色背景怎么去掉-->
     <meta name="msapplication-tap-highlight" content="no">
     <link rel="stylesheet" href="css/index.css">
-    <script src="js/qrcode.min.js"></script>
     <script src="js/axios.min.js"></script>
     <script src="js/vue.min.js"></script>
 </head>
@@ -28,12 +27,8 @@
     </header>
     <div class="app_wrapper">
         <div class="platform_wrapper">
-            <span>
-                <span class="platform_title" v-on:click="switchPlatform" v-bind:class="{ selected_title: selected_paltform === 'ios' }">iOS</span>
-                <span class="platform_title" v-on:click="switchPlatform" v-bind:class="{ selected_title: selected_paltform === 'android' }">Android</span>
-            </span>
-            <ul class="app_list">
-                <li v-for="app in apps" :bundle-id="app.bundleID"  v-on:click="viewAllVersion">
+            <ul class="app_list" v-if="has_data">
+                <li v-for="app in apps" :key="app.id">
                     <div class="app_info">
                         <img :src="app.icon">
                         <div class="info_box">
@@ -50,23 +45,8 @@
             <div class="moreAppButton" v-on:click="loadApps" v-if="show_load_more_apps_button"><span>加载更多</span></div>
         </div>
     </div>
-    <div class="qrcode_wrapper">
-        <p class="qrcode_btn" v-on:click="toggleQrcode" v-bind:class="{ open: qrcode_box_show}">二维码</p>
-        <div class="qrcode_box" v-bind:class="{ qrcode_box_show: qrcode_box_show }">
-            <div class="qrcode_pic"></div>
-            <div class="step">
-                <p>微信扫描此页面不能显示，请点击右上角"在safari中打开"</p>
-                <div class="step_detail">
-                    <span>第一步:</span>
-                    <img src="images/step_01.png" alt="">  
-                    <span>第二步:</span>
-                    <img src="images/step_02.png" alt="">
-                </div>
-            </div>
-        </div>
-    </div>
     <p class="support">网站由<a href="https://github.com/zhao0/ipapk-server">ipapk-server</a>项目支持</p>
 </div>
 </body>
-<script src="js/index.js"></script>
+<script src="js/versionlist.js"></script>
 </html>
