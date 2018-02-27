@@ -11,6 +11,8 @@
 * [nodejs](https://nodejs.org/)
 * gcc
 
+0.2.9版本 以上需要浏览器支持ES6
+
 # 安装
 ```
 $ npm install -g ipapk-server
